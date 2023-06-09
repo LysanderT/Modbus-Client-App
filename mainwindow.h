@@ -7,6 +7,8 @@
 #include <QVector>
 #include <QComboBox>
 #include <QPushButton>
+#include <QTcpSocket>
+#include <QHostAddress>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -31,6 +33,7 @@ private slots:
     void _click_PortButton();
     // send modbus frame
     void _click_ModbusButton();
+    void _click_ModbusButton_Test();
     // add new row
     void _click_PlusButton();
     // remove the specified row
@@ -39,6 +42,8 @@ private slots:
     void _click_DataButton();
     // process the data send back from slave
     void _receiveData();
+    // response to the mode changing
+    void _changeMode(QString);
 
 private:
     Ui::MainWindow *ui;
@@ -48,5 +53,13 @@ private:
     QVector<QPushButton*> list_minusButton;
     QVector<QComboBox*> list_dataType;
     QPushButton * plusButton;
+    QTcpSocket * socket;
+    int baudRate;
+    int mode=0;
+    int transaction = 0x0000; // TCP transaction identifier
+    bool isValidIndex(int x,int y);
+    void initSetup();
+    void initTabelview();
+    void initConnection();
 };
 #endif // MAINWINDOW_H
