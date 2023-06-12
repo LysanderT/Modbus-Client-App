@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QProgressDialog>
+#include <QTextEdit>
 
 // static look-up table (CRC-16)
 QVector<unsigned char> CRC_lo = {
@@ -80,36 +81,36 @@ MainWindow::~MainWindow()
     delete plusButton;
 }
 
-void MainWindow::_changeText(){
-    switch (ui->comboBox_func->currentText().toInt()) {
-    case 1:
-        ui->label_x->setText(QStringLiteral("起始地址："));
-        ui->label_y->setText(QStringLiteral("线圈数量："));
-        break;
-    case 2:
-        ui->label_x->setText(QStringLiteral("起始地址："));
-        ui->label_y->setText(QStringLiteral("输入数量："));
-        break;
-    case 3:
-        ui->label_x->setText(QStringLiteral("字节数："));
-        ui->label_y->setText(QStringLiteral("寄存器值："));
-        break;
-    case 4:
-        ui->label_x->setText(QStringLiteral("起始地址："));
-        ui->label_y->setText(QStringLiteral("输入寄存器数量："));
-        break;
-    case 5:
-        ui->label_x->setText(QStringLiteral("输出地址："));
-        ui->label_y->setText(QStringLiteral("输出值："));
-        break;
-    case 6:
-        ui->label_x->setText(QStringLiteral("寄存器地址："));
-        ui->label_y->setText(QStringLiteral("寄存器值："));
-        break;
-    default:
-        qDebug() << "error in slot: changeText().";
-    }
-}
+//void MainWindow::_changeText(){
+//    switch (ui->comboBox_func->currentText().toInt()) {
+//    case 1:
+//        ui->label_x->setText(QStringLiteral("起始地址："));
+//        ui->label_y->setText(QStringLiteral("线圈数量："));
+//        break;
+//    case 2:
+//        ui->label_x->setText(QStringLiteral("起始地址："));
+//        ui->label_y->setText(QStringLiteral("输入数量："));
+//        break;
+//    case 3:
+//        ui->label_x->setText(QStringLiteral("字节数："));
+//        ui->label_y->setText(QStringLiteral("寄存器值："));
+//        break;
+//    case 4:
+//        ui->label_x->setText(QStringLiteral("起始地址："));
+//        ui->label_y->setText(QStringLiteral("输入寄存器数量："));
+//        break;
+//    case 5:
+//        ui->label_x->setText(QStringLiteral("输出地址："));
+//        ui->label_y->setText(QStringLiteral("输出值："));
+//        break;
+//    case 6:
+//        ui->label_x->setText(QStringLiteral("寄存器地址："));
+//        ui->label_y->setText(QStringLiteral("寄存器值："));
+//        break;
+//    default:
+//        qDebug() << "error in slot: changeText().";
+//    }
+//}
 
 void MainWindow::_click_PortButton(){
     qDebug() << ui->PortButton->text();
@@ -243,45 +244,45 @@ void MainWindow::_click_ModbusButton(){
     qDebug() << "发报结束";
 }
 
-void MainWindow::_click_ModbusButton_Test(){
-    qDebug() << "发送报文";
-//    int delay = 3.5*11*1000/baudRate+1;
-    QString str;
-    if(mode==1){
-        str.append(QString("%1").arg(transaction,4,16,QLatin1Char('0')));
-        transaction+=1;
-        str.append("0000"); // label: modbus
-        str.append("0006"); // for single read/write
-    }
-    str.append(ui->lineEdit_slave->text());
-    str.append(ui->comboBox_func->currentText());
-    str.append(ui->lineEdit_x->text());
-    str.append(ui->lineEdit_y->text());
-    QByteArray frame = QByteArray::fromHex(str.toLatin1());
-    int res=0;
-    if(mode==0){
-        append_CRC(frame);
-        res = serial->write(frame);
-        serial->flush();
-    }else if(mode==1){
-        res = socket->write(frame);
-        socket->flush();
-    }
-    if(res){
-        qDebug() << "successfully sent.";
-    }
-    else{qDebug() << "fail to send.";}
+//void MainWindow::_click_ModbusButton_Test(){
+//    qDebug() << "发送报文";
+////    int delay = 3.5*11*1000/baudRate+1;
+//    QString str;
+//    if(mode==1){
+//        str.append(QString("%1").arg(transaction,4,16,QLatin1Char('0')));
+//        transaction+=1;
+//        str.append("0000"); // label: modbus
+//        str.append("0006"); // for single read/write
+//    }
+//    str.append(ui->lineEdit_slave->text());
+//    str.append(ui->comboBox_func->currentText());
+//    str.append(ui->lineEdit_x->text());
+//    str.append(ui->lineEdit_y->text());
+//    QByteArray frame = QByteArray::fromHex(str.toLatin1());
+//    int res=0;
+//    if(mode==0){
+//        append_CRC(frame);
+//        res = serial->write(frame);
+//        serial->flush();
+//    }else if(mode==1){
+//        res = socket->write(frame);
+//        socket->flush();
+//    }
+//    if(res){
+//        qDebug() << "successfully sent.";
+//    }
+//    else{qDebug() << "fail to send.";}
 
-//--------another implementation--------
-//    QByteArray frame;
-//    frame.append(ui->lineEdit_slave->text().toLatin1());
-//    frame.append(ui->comboBox_func->currentText().toLatin1());
-//    frame.append(ui->lineEdit_x->text().toLatin1());
-//    frame.append(ui->lineEdit_y->text().toLatin1());
-//    frame = QByteArray::fromHex(frame);
-//-------------
-//    QThread::msleep(delay);
-}
+////--------another implementation--------
+////    QByteArray frame;
+////    frame.append(ui->lineEdit_slave->text().toLatin1());
+////    frame.append(ui->comboBox_func->currentText().toLatin1());
+////    frame.append(ui->lineEdit_x->text().toLatin1());
+////    frame.append(ui->lineEdit_y->text().toLatin1());
+////    frame = QByteArray::fromHex(frame);
+////-------------
+////    QThread::msleep(delay);
+//}
 
 void MainWindow::_click_PlusButton(){
     int index = model->rowCount()-1;
@@ -548,16 +549,16 @@ void MainWindow::initSetup(){
     // fill comboBox_mode
     ui->comboBox_mode->addItem(tr("RTU"),0);
     ui->comboBox_mode->addItem(tr("TCP"),1);
-    // fill comboBox_func
-    ui->comboBox_func->addItem(QStringLiteral("01"),1);
-    ui->comboBox_func->addItem(QStringLiteral("02"),2);
-    ui->comboBox_func->addItem(QStringLiteral("03"),3);
-    ui->comboBox_func->addItem(QStringLiteral("04"),4);
-    ui->comboBox_func->addItem(QStringLiteral("05"),5);
-    ui->comboBox_func->addItem(QStringLiteral("06"),6);
-    // set default
-    ui->label_x->setText(QStringLiteral("起始地址："));
-    ui->label_y->setText(QStringLiteral("线圈数量："));
+//    // fill comboBox_func
+//    ui->comboBox_func->addItem(QStringLiteral("01"),1);
+//    ui->comboBox_func->addItem(QStringLiteral("02"),2);
+//    ui->comboBox_func->addItem(QStringLiteral("03"),3);
+//    ui->comboBox_func->addItem(QStringLiteral("04"),4);
+//    ui->comboBox_func->addItem(QStringLiteral("05"),5);
+//    ui->comboBox_func->addItem(QStringLiteral("06"),6);
+//    // set default
+//    ui->label_x->setText(QStringLiteral("起始地址："));
+//    ui->label_y->setText(QStringLiteral("线圈数量："));
     // set unable
     ui->lineEdit_address->setEnabled(false);
     ui->lineEdit_address->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
@@ -606,7 +607,7 @@ void MainWindow::initTabelview(){
 
 void MainWindow::initConnection(){
     // change text corresponding to different function code
-    connect(ui->comboBox_func,SIGNAL(currentTextChanged(QString)),this,SLOT(_changeText()));
+//    connect(ui->comboBox_func,SIGNAL(currentTextChanged(QString)),this,SLOT(_changeText()));
     // change mode
     connect(ui->comboBox_mode,SIGNAL(currentTextChanged(QString)),this,SLOT(_changeMode(QString)));
     // PortButton connection

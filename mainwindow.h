@@ -29,12 +29,12 @@ public slots:
     void exportData(int);
 
 private slots:
-    void _changeText();
+//    void _changeText();
     // open the selected serial port
     void _click_PortButton();
     // send modbus frame
     void _click_ModbusButton();
-    void _click_ModbusButton_Test();
+//    void _click_ModbusButton_Test();
     // add new row
     void _click_PlusButton();
     // remove the specified row
