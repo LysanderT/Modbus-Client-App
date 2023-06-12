@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QDebug>
 #include <QMessageBox>
+#include <QProgressDialog>
 
 // static look-up table (CRC-16)
 QVector<unsigned char> CRC_lo = {
@@ -57,6 +58,18 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
     initSetup();
     initTabelview();
     initConnection();
+//    //test
+//    char x= 0x0a;
+//    int y=x;
+//    qDebug() << y;
+//    QByteArray z=QByteArray::fromHex("0bcd");
+//    qDebug() << z;
+//    int g = z.at(0);
+//    qDebug() << g;
+//    QString h = QString("%1").arg(g,0,16);
+//    qDebug() << h;
+//    QString f = QString::number(g,16);
+//    qDebug() << f;
 }
 
 MainWindow::~MainWindow()
@@ -169,8 +182,8 @@ void MainWindow::_click_PortButton(){
                 connect(socket, &QTcpSocket::readyRead, this, &MainWindow::_receiveData);
             }else{
                 qDebug() << "fail to connet TCP";
-                //socket->disconnectFromHost();
-                //QMessageBox::critical(this, "错误","连接失败！请检查ip地址/端口号是否正确。");
+                socket->disconnectFromHost();
+                QMessageBox::critical(this, "连接超时","连接失败！请检查ip地址/端口号是否正确以及服务器在线情况。");
             }
         }else{
             // break the TCP connection
@@ -198,7 +211,33 @@ void MainWindow::_click_PortButton(){
     // 单元标识符必须用0xFF
 }
 
-void MainWindow::_click_ModbusButton(){}
+void Delay_MSec(unsigned int msec)
+{
+    QEventLoop loop;//定义一个新的事件循环
+    QTimer::singleShot(msec, &loop, SLOT(quit()));//创建单次定时器，槽函数为事件循环的退出函数
+    loop.exec();//事件循环开始执行，程序会卡在这里，直到定时时间到，本循环被退出
+}
+
+void MainWindow::_click_ModbusButton(){
+    QProgressDialog progress("进度","停止",0,model->rowCount()-1);
+    progress.setWindowTitle("进度");
+//    progress.setWindowModality(Qt::WindowModal);
+    progress.show();
+    int delay = mode==0?3.5*11*1000/baudRate+1:ui->lineEdit_delay->text().toInt();
+    for(int i=0; i<model->rowCount()-1; i++) {
+        // process task
+        constructFrame(i);
+        qDebug() << "第"+QString::number(i)+"次报文";
+//        if(res){QMessageBox::critical(this, "错误","检测到空输入");}
+
+        // increment
+        progress.setValue(i);
+        QCoreApplication::processEvents();
+        QThread::msleep(delay);
+        if(progress.wasCanceled()) break;
+    }
+    progress.close();
+}
 
 void MainWindow::_click_ModbusButton_Test(){
     qDebug() << "发送报文";
@@ -237,8 +276,6 @@ void MainWindow::_click_ModbusButton_Test(){
 //    frame.append(ui->lineEdit_y->text().toLatin1());
 //    frame = QByteArray::fromHex(frame);
 //-------------
-
-
 //    QThread::msleep(delay);
 }
 
@@ -278,17 +315,21 @@ void MainWindow::_click_PlusButton(){
         }
         if(flag) qDebug() << "click_minus EMITION ERROR.";
     });
-    // add default of 单位长度
-    int unit = model->item(index-1,4)->text().toInt();
-    QString str = QString::number(unit);
+    // set default of 从站地址
+    int unit = model->item(index-1,4)->text().toInt(nullptr,16);
+    QString str = QString("%1").arg(unit,2,16,QLatin1Char('0'));
+    model->setItem(index, 1, new QStandardItem(str));
+    // set default of 单位长度
+    unit = model->item(index-1,4)->text().toInt();
+    str = QString::number(unit);
     model->setItem(index, 4, new QStandardItem(str));
-    // add default of 起始地址
+    // set default of 起始地址
     str = QString::number(unit,16);
     int x = model->item(index-1,3)->text().toInt(nullptr,16);
     int y = str.toInt(nullptr,16);
     str =  QString("%1").arg(x+y,4,16,QLatin1Char('0'));//value为int型或char型都可
     model->setItem(index,3,new QStandardItem(str));
-    // add default of 变比
+    // set default of 变比
     QString str2 = QString("%1").arg(model->item(index-1,6)->text().toFloat());
     model->setItem(index, 6, new QStandardItem(str2));
     // reset plusButton
@@ -305,7 +346,7 @@ void MainWindow::_click_PlusButton(){
 //        qDebug() << "data invalid!";
 //    }
     qDebug() << isValidIndex(index-1,3);
-    qDebug() << isValidIndex(index-1,2);
+    //qDebug() << isValidIndex(index-1,2);
     qDebug() << model->item(index-1,3)->text();
 }
 
@@ -331,19 +372,52 @@ void MainWindow::_click_DataButton(){
 void MainWindow::_receiveData(){
     QByteArray buf;
     qDebug() << "readData: ";
-    if(mode==0){
-        buf = serial->readAll();
-    }else if(mode==1){
+    if(mode==1){
         buf = socket->readAll();
+        if(!buf.isEmpty()){
+            receiveBuf.append(buf);
+            if(receiveBuf.size()>=6){
+                int num = receiveBuf.at(5);
+                if(receiveBuf.size()>=6+num){
+//                    qDebug() << "bytearray:" << receiveBuf;
+//                    QString tmp = receiveBuf.sliced(6+num-2,2).toHex();
+//                    qDebug() << "string:" << tmp;
+//                    int val = tmp.toInt(nullptr,16);
+                    // actually need data type identification
+                    int val = receiveBuf.at(6+num-1);
+                    qDebug() << "int:" << val;
+                    QString curr_data = QString::number(val,16);
+                    model->setItem(receive_index, 9, new QStandardItem(curr_data));
+                    if(isValidIndex(receive_index,6)){
+                        int ratio = model->item(receive_index,6)->text().toInt();
+                        QString real_data = QString::number(val*ratio,16);
+                        model->setItem(receive_index,9,new QStandardItem(real_data));
+                    }
+                    receive_index++;
+//                    ui->textBrowser_receive->append(receiveBuf.sliced(0,6+num));
+//                    ui->textBrowser_receive->append("\n");
+                    receiveBuf.remove(0,6+num);
+                }
+//                QString y = x.sliced(0,2).toHex();
+//                int z=y.toInt(nullptr,16);
+            }
+        }
+
+    }else if(mode==0){
+        buf = serial->readAll();
+        if (!buf.isEmpty()){
+            QString str = ui->textBrowser_receive->toPlainText().toLatin1();
+            str += " ";
+            str += buf.toHex(' ');
+            // str += tr(buf);
+            ui->textBrowser_receive->clear();
+            ui->textBrowser_receive->append(str);
+        }
     }
-    if (!buf.isEmpty()){
-        QString str = ui->textBrowser_receive->toPlainText().toLatin1();
-        str += ":";
-        str += buf.toHex(':');
-        // str += tr(buf);
-        ui->textBrowser_receive->clear();
-        ui->textBrowser_receive->append(str);
-    }
+    // 最终：QString::number(QString(buf[x..x+1].toHex()).toInt(nullptr,16))
+//    int x=QString("0b").toInt(nullptr,16); // 16转10进制数字
+//    qDebug() << x;
+//    qDebug() << QString::number(x); //10进制数字转10进制字符串
 }
 
 void MainWindow::exportData(int msg)
@@ -498,7 +572,7 @@ void MainWindow::initTabelview(){
     model = new QStandardItemModel();
     ui->tableView->setModel(model);
     ui->tableView->setFocusPolicy(Qt::NoFocus); //去掉选中单元格时的虚框
-    model->setHorizontalHeaderLabels({"","从站地址(0x)","功能码", "起始地址(0x)", "单位长度","数据类型","变比","数据库变量", "当前值","实际值"});
+    model->setHorizontalHeaderLabels({"","从站地址(0x)","功能码", "起始地址(0x)", "单位长度","数据类型","变比","数据库变量", "单位","当前值","实际值"});
     model->setItem(0,1,new QStandardItem("01"));
     model->setItem(0, 3, new QStandardItem("0000"));
     model->setItem(0,4,new QStandardItem("1"));
@@ -538,8 +612,10 @@ void MainWindow::initConnection(){
     // PortButton connection
     connect(ui->PortButton,SIGNAL(clicked()),this,SLOT(_click_PortButton()));
     ui->ModbusButton->setEnabled(false);
+    // Modbus Test
+    //connect(ui->ModbusButton,SIGNAL(clicked()),this,SLOT(_click_ModbusButton_Test()));
     // ModusButton connection
-    connect(ui->ModbusButton,SIGNAL(clicked()),this,SLOT(_click_ModbusButton_Test()));
+    connect(ui->ModbusButton,SIGNAL(clicked()),this,SLOT(_click_ModbusButton()));
     // PlusButton connection
     connect(plusButton,SIGNAL(clicked()),this,SLOT(_click_PlusButton()));
     // MinusButton connection
@@ -576,4 +652,35 @@ void MainWindow::_changeMode(QString msg){
     }else{
         qDebug() << "CHANGE MODE ERROR";
     }
+}
+
+void MainWindow::constructFrame(int index){
+    QString str;
+    if(mode==1){
+        str.append(QString("%1").arg(transaction,4,16,QLatin1Char('0')));
+        transaction+=1;
+        str.append("0000"); // label: modbus
+        str.append("0006"); // for single read/write
+    }
+    int res = isValidIndex(index,1) && isValidIndex(index,3) && isValidIndex(index,4);
+    if(!res){qDebug() << "Invalid index! Fail to send.";return;}
+    str.append(model->item(index,1)->text()); // address of slave
+    str.append(list_funcCode.at(index)->currentText());
+    str.append(model->item(index,3)->text()); // start address
+    str.append("0001"); // one for each query
+//    str.append(model->item(index,4)->text()->toInt(16)); // data length
+    QByteArray frame = QByteArray::fromHex(str.toLatin1());
+    res=0;
+    if(mode==0){
+        append_CRC(frame);
+        res = serial->write(frame);
+        //serial->flush();
+    }else if(mode==1){
+        res = socket->write(frame);
+        socket->flush();
+    }
+    if(res){
+        qDebug() << "Successfully sent.";
+    }
+    else{qDebug() << "Fail to send.";}
 }

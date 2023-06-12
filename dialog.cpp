@@ -9,6 +9,7 @@ Dialog::Dialog(QWidget *parent) :
     connect(ui->csvButton,&QPushButton::clicked,this,[&](){emit which_to_click(0);});
     connect(ui->excelButton,&QPushButton::clicked,this,[&](){emit which_to_click(1);});
     connect(ui->txtButton,&QPushButton::clicked,this,[&](){emit which_to_click(2);});
+
     connect(this,SIGNAL(which_to_click(int)),parent,SLOT(exportData(int)));
 
     connect(ui->csvButton,SIGNAL(clicked()),this,SLOT(close()));

@@ -1,17 +1,17 @@
 # Modbus Client App
 --- 
-a cross-platform implementation for modbus client used for testing modbus server
+A cross-platform implementation for modbus client/master used for testing/simulating modbus server/host
 
-Given that there is currently no open-source & cross-platform Modbus client software available online, I plan to implement one with minimal dependencies (Qt library or QSerialport module).
+Given that there is currently no open-source & cross-platform Modbus client software available online (either not free or can only be running on Windows), I plan to implement one with minimal dependencies (Qt library or QSerialport module).
 
 ## Developing Process
 
 1.FUNCTION
 - [x] construct modbus frame
 - [x] send data
+- [x] determine the time interval of sending data
 - [x] receive data
-- [ ] parse and analyze received data
-- [ ] handle the case when server actively terminate the connection
+- [x] parse and analyze the received data
 
 2.MODE
 
@@ -19,21 +19,31 @@ Given that there is currently no open-source & cross-platform Modbus client soft
 - [ ] ASCII-serial
 - [x] TCP
 
-3.FEATURES
+3.SUPPORTED FUNCTION CODE
+- [x] 0x01
+- [x] 0x02
+- [x] 0x03
+- [x] 0x04
+- [ ] 0x05
+- [ ] 0x06
+- ...
+
+4.FEATURES
 
 - [x] basic GUI
 - [x] tableView
 - [x] export data as csv/excel/txt file
-- [ ] progress bar
+- [x] 'real' progress bar
 - [ ] query continous address
+- [ ] catch the case when server actively terminate the connection
 - [ ] modelize the code
 - [ ] release (.dmg/.exe)
 - [ ] ...
 
-4.TEST
+5.TEST
 - [ ] unit test
-- [ ] simulation
-- [ ] real device
+- [x] simulation - (utilized [unslave.exe](https://unserver.xyz/docs/unslave/#tcp-section) installed on a Windows PC)
+- [ ] on real device
 
 
 ## Perequisites
@@ -64,16 +74,20 @@ void use(){
 
 You can also package the project into an executable file (which is easy using QT Creator) and run it directly.
 
+## Demonstration
+
+should be a video here
+
 ## Developing Environment
 
-* MacOS 13.1
+* MacOS Ventura 13.1
 * Qt 6.2.3
 * QtCreator 7.0.2
 
 ## To contribute
 
 1. fork the repo to your local repo
-2. write/change something in the local repo 
-3. back to the original repo and send the Pull Request
+2. write/change something in the local repo
+3. back to the original repo and raise the Pull Request
 
-👍 any contribution is welcome :)
+👍 any contribution is welcome!

@@ -54,12 +54,16 @@ private:
     QVector<QComboBox*> list_dataType;
     QPushButton * plusButton;
     QTcpSocket * socket;
+    QByteArray receiveBuf;
     int baudRate;
     int mode=0;
+    int tcpCount=0;
     int transaction = 0x0000; // TCP transaction identifier
+    int receive_index = 0;
     bool isValidIndex(int x,int y);
     void initSetup();
     void initTabelview();
     void initConnection();
+    void constructFrame(int);
 };
 #endif // MAINWINDOW_H
