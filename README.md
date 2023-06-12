@@ -1,8 +1,8 @@
 # Modbus Client App
 --- 
-A cross-platform implementation for modbus client/master used for testing/simulating modbus server/host
+Modbus Client App is a robust and cross-platform implementation for modbus master to test modbus server.
 
-Given that there is currently no open-source & cross-platform Modbus client software available online (either not free or can only be running on Windows), I plan to implement one with minimal dependencies (Qt library or QSerialport module).
+Given that there is currently no open-source & cross-platform Modbus client software with GUI available online (either not free or can only be running on Windows), I implemented one with minimal dependencies (Qt library).
 
 ## Developing Process
 
@@ -34,16 +34,16 @@ Given that there is currently no open-source & cross-platform Modbus client soft
 - [x] tableView
 - [x] export data as csv/excel/txt file
 - [x] 'real' progress bar
+- [x] automatically ignore invalid input under TCP mode
 - [ ] query continous address
-- [ ] catch the case when server actively terminate the connection
+- [x] catch the case when server actively terminate the connection
 - [ ] modelize the code
 - [ ] release (.dmg/.exe)
 - [ ] ...
 
 5.TEST
-- [ ] unit test
 - [x] simulation - (utilized [unslave.exe](https://unserver.xyz/docs/unslave/#tcp-section) installed on a Windows PC)
-- [ ] on real device
+- [x] on real device
 
 
 ## Perequisites

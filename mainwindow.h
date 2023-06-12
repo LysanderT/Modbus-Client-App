@@ -9,6 +9,7 @@
 #include <QPushButton>
 #include <QTcpSocket>
 #include <QHostAddress>
+#include <QMap>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -44,6 +45,8 @@ private slots:
     void _receiveData();
     // response to the mode changing
     void _changeMode(QString);
+    // response to the host error
+    void _hostError();
 
 private:
     Ui::MainWindow *ui;
@@ -64,6 +67,7 @@ private:
     void initSetup();
     void initTabelview();
     void initConnection();
-    void constructFrame(int);
+    bool constructFrame(int);
+    QMap<int,int> row_mp;
 };
 #endif // MAINWINDOW_H

@@ -180,13 +180,15 @@ void MainWindow::_click_PortButton(){
                 ui->ModbusButton->setEnabled(true);
                 ui->PortButton->setText(tr("断开连接"));
                 connect(socket, &QTcpSocket::readyRead, this, &MainWindow::_receiveData);
+                connect(socket,&QAbstractSocket::disconnected,this,&MainWindow::_hostError);
             }else{
-                qDebug() << "fail to connet TCP";
+                qDebug() << "fail to connect TCP";
                 socket->disconnectFromHost();
                 QMessageBox::critical(this, "连接超时","连接失败！请检查ip地址/端口号是否正确以及服务器在线情况。");
             }
         }else{
             // break the TCP connection
+            disconnect(socket,&QAbstractSocket::disconnected,this,&MainWindow::_hostError);
             socket->abort();
             if(socket->state()==QTcpSocket::UnconnectedState){
                 qDebug() << "TCP connection broken";
@@ -203,12 +205,7 @@ void MainWindow::_click_PortButton(){
                 QMessageBox::critical(this,"错误","断开TCP连接失败！");
             }
         }
-        ui->ModbusButton->setEnabled(true);//！！！！！！！！
     }
-
-
-    // TCP
-    // 单元标识符必须用0xFF
 }
 
 void Delay_MSec(unsigned int msec)
@@ -219,24 +216,31 @@ void Delay_MSec(unsigned int msec)
 }
 
 void MainWindow::_click_ModbusButton(){
+    row_mp.clear(); // reset row_mp
+    receive_index = 0;  // ***reset receive_index
     QProgressDialog progress("进度","停止",0,model->rowCount()-1);
     progress.setWindowTitle("进度");
 //    progress.setWindowModality(Qt::WindowModal);
     progress.show();
+    progress.setAttribute(Qt::WA_DeleteOnClose,true);
     int delay = mode==0?3.5*11*1000/baudRate+1:ui->lineEdit_delay->text().toInt();
     for(int i=0; i<model->rowCount()-1; i++) {
         // process task
-        constructFrame(i);
-        qDebug() << "第"+QString::number(i)+"次报文";
-//        if(res){QMessageBox::critical(this, "错误","检测到空输入");}
-
+        bool res = constructFrame(i);
+        if(res){
+            qDebug() << "第"+QString::number(i)+"次报文发送成功";
+        }else{
+            QString output="第"+QString::number(i)+"次报文发送失败";
+            qDebug() << output;
+            QMessageBox::critical(this, "错误",output);
+        }
         // increment
         progress.setValue(i);
         QCoreApplication::processEvents();
         QThread::msleep(delay);
         if(progress.wasCanceled()) break;
     }
-    progress.close();
+    qDebug() << "发报结束";
 }
 
 void MainWindow::_click_ModbusButton_Test(){
@@ -304,9 +308,7 @@ void MainWindow::_click_PlusButton(){
     pub->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     connect(pub,&QPushButton::clicked,this,[=](){ // must be '=' instead of '&' !!!
         bool flag = true;
-        qDebug() << pub;
         for(int i=0; i<list_minusButton.size(); i++){
-            qDebug() << list_minusButton.at(i);
             if(list_minusButton.at(i)==pub){
                 emit click_minus(i);
                 flag = false;
@@ -345,9 +347,7 @@ void MainWindow::_click_PlusButton(){
 //    }else{
 //        qDebug() << "data invalid!";
 //    }
-    qDebug() << isValidIndex(index-1,3);
-    //qDebug() << isValidIndex(index-1,2);
-    qDebug() << model->item(index-1,3)->text();
+    qDebug() << "add line:" << index+1;
 }
 
 void MainWindow::_click_MinusButton(int msg){
@@ -361,6 +361,7 @@ void MainWindow::_click_MinusButton(int msg){
     list_dataType.erase(list_dataType.begin()+msg);
     delete *(list_funcCode.begin()+msg);
     list_funcCode.erase(list_funcCode.begin()+msg);
+    qDebug() << "remove line:" << msg+1;
 }
 
 void MainWindow::_click_DataButton(){
@@ -372,49 +373,48 @@ void MainWindow::_click_DataButton(){
 void MainWindow::_receiveData(){
     QByteArray buf;
     qDebug() << "readData: ";
-    if(mode==1){
-        buf = socket->readAll();
-        if(!buf.isEmpty()){
-            receiveBuf.append(buf);
-            if(receiveBuf.size()>=6){
-                int num = receiveBuf.at(5);
-                if(receiveBuf.size()>=6+num){
+    if(mode==1){buf = socket->readAll();}
+    else if(mode==0){buf = serial->readAll();}
+    if(buf.isEmpty()){return;}
+    receiveBuf.append(buf);
+    if(receiveBuf.size()<6){return;}
+    int num = receiveBuf.at(5);
+    if(receiveBuf.size()<6+num){return;}
 //                    qDebug() << "bytearray:" << receiveBuf;
 //                    QString tmp = receiveBuf.sliced(6+num-2,2).toHex();
 //                    qDebug() << "string:" << tmp;
 //                    int val = tmp.toInt(nullptr,16);
-                    // actually need data type identification
-                    int val = receiveBuf.at(6+num-1);
-                    qDebug() << "int:" << val;
-                    QString curr_data = QString::number(val,16);
-                    model->setItem(receive_index, 9, new QStandardItem(curr_data));
-                    if(isValidIndex(receive_index,6)){
-                        int ratio = model->item(receive_index,6)->text().toInt();
-                        QString real_data = QString::number(val*ratio,16);
-                        model->setItem(receive_index,9,new QStandardItem(real_data));
-                    }
-                    receive_index++;
+        // actually need data type identification
+    int val = receiveBuf.at(6+num-1);
+    qDebug() << "int:" << val;
+    QString curr_data = QString::number(val,16);
+    int tcp_index = receiveBuf.at(0)*32;
+    tcp_index+=receiveBuf.at(1);
+    tcp_index=row_mp[tcp_index];
+    int index=mode==1?tcp_index:receive_index;
+    model->setItem(index, 9, new QStandardItem(curr_data));
+    if(isValidIndex(index,6)){
+        int ratio = model->item(index,6)->text().toInt();
+        QString real_data = QString::number(val*ratio,16);
+        model->setItem(index,10,new QStandardItem(real_data));
+    }
+    if(mode==0){receive_index++;}
 //                    ui->textBrowser_receive->append(receiveBuf.sliced(0,6+num));
 //                    ui->textBrowser_receive->append("\n");
-                    receiveBuf.remove(0,6+num);
-                }
+    receiveBuf.remove(0,6+num);
 //                QString y = x.sliced(0,2).toHex();
 //                int z=y.toInt(nullptr,16);
-            }
-        }
+//        if(mode==0){
+//        buf = serial->readAll();
+//        if (!buf.isEmpty()){
+//            QString str = ui->textBrowser_receive->toPlainText().toLatin1();
+//            str += " ";
+//            str += buf.toHex(' ');
+//            // str += tr(buf);
+//            ui->textBrowser_receive->clear();
+//            ui->textBrowser_receive->append(str);
+//        }
 
-    }else if(mode==0){
-        buf = serial->readAll();
-        if (!buf.isEmpty()){
-            QString str = ui->textBrowser_receive->toPlainText().toLatin1();
-            str += " ";
-            str += buf.toHex(' ');
-            // str += tr(buf);
-            ui->textBrowser_receive->clear();
-            ui->textBrowser_receive->append(str);
-        }
-    }
-    // 最终：QString::number(QString(buf[x..x+1].toHex()).toInt(nullptr,16))
 //    int x=QString("0b").toInt(nullptr,16); // 16转10进制数字
 //    qDebug() << x;
 //    qDebug() << QString::number(x); //10进制数字转10进制字符串
@@ -518,6 +518,7 @@ void MainWindow::initSetup(){
     // uncomment the line below to output the number of available ports
 //    qDebug() << "Total numbers of ports: " << serialPortInfos.count();
     // fill comboBox_ports
+    qDebug() << "available serial port:";
     for (const QSerialPortInfo &serialPortInfo : serialPortInfos){
         QStringList list;
         description = serialPortInfo.description();
@@ -530,9 +531,8 @@ void MainWindow::initSetup(){
              << serialPortInfo.systemLocation()
              << (serialPortInfo.vendorIdentifier() ? QString::number(serialPortInfo.vendorIdentifier(), 16) : "")
              << (serialPortInfo.productIdentifier() ? QString::number(serialPortInfo.productIdentifier(), 16) : "");
-        qDebug() << "端口名：" << serialPortInfo.portName();
-                                  qDebug() << "端口位置：" << serialPortInfo.systemLocation();
-                                        ui->comboBox_port->addItem(list.first(), list);
+        qDebug() << "[name]-" << serialPortInfo.portName() << "[address]-" << serialPortInfo.systemLocation();
+        ui->comboBox_port->addItem(list.first(), list);
     }
     ui->comboBox_port->addItem(tr("custom"));
     // fill comboBox_baudRate
@@ -625,6 +625,7 @@ void MainWindow::initConnection(){
 }
 
 void MainWindow::_changeMode(QString msg){
+    qDebug() << msg << "mode";
     if(msg=="RTU"){
         mode = 0;
         ui->PortButton->setText("打开串口");
@@ -654,16 +655,28 @@ void MainWindow::_changeMode(QString msg){
     }
 }
 
-void MainWindow::constructFrame(int index){
+void MainWindow::_hostError(){
+    QMessageBox::critical(this,"TCP连接断开","The host is disconnected. Plz check whether the host is closed.");
+    ui->lineEdit_address->setEnabled(true);
+    ui->lineEdit_port->setEnabled(true);
+    ui->lineEdit_delay->setEnabled(true);
+
+    ui->comboBox_mode->setEnabled(true);
+    ui->ModbusButton->setEnabled(false);
+    ui->PortButton->setText(tr("TCP连接"));
+    disconnect(socket, &QTcpSocket::readyRead, this, &MainWindow::_receiveData);
+}
+bool MainWindow::constructFrame(int index){
     QString str;
     if(mode==1){
         str.append(QString("%1").arg(transaction,4,16,QLatin1Char('0')));
+        row_mp[transaction] = index;
         transaction+=1;
         str.append("0000"); // label: modbus
         str.append("0006"); // for single read/write
     }
     int res = isValidIndex(index,1) && isValidIndex(index,3) && isValidIndex(index,4);
-    if(!res){qDebug() << "Invalid index! Fail to send.";return;}
+    if(!res){qDebug() << "Invalid index! Fail to send.";return false;}
     str.append(model->item(index,1)->text()); // address of slave
     str.append(list_funcCode.at(index)->currentText());
     str.append(model->item(index,3)->text()); // start address
@@ -674,13 +687,14 @@ void MainWindow::constructFrame(int index){
     if(mode==0){
         append_CRC(frame);
         res = serial->write(frame);
-        //serial->flush();
+        serial->flush();
     }else if(mode==1){
         res = socket->write(frame);
         socket->flush();
     }
     if(res){
         qDebug() << "Successfully sent.";
+        return true;
     }
-    else{qDebug() << "Fail to send.";}
+    else{qDebug() << "Fail to send.";return false;}
 }
