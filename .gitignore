@@ -37,6 +37,7 @@ Thumbs.db
 
 # qtcreator generated files
 *.pro.user*
+*.txt.user*
 
 # xemacs temporary files
 *.flc
@@ -69,5 +70,5 @@ Thumbs.db
 # Binaries
 # --------
 *.dll
-*.exe
+# *.exe
 

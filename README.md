@@ -30,27 +30,42 @@ Given that there is currently no open-source & cross-platform Modbus client soft
 
 4.FEATURES
 
-- [x] basic GUI
-- [x] tableView
-- [x] export data as csv/excel/txt file
+- [x] export data as csv/excel/txt/xml file
+    - [x] csv
+    - [x] excel
+    - [x] txt
+    - [ ] xml
 - [x] 'real' progress bar
 - [x] automatically ignore invalid input under TCP mode
-- [ ] query continous address
 - [x] catch the case when server actively terminate the connection
-- [ ] modelize the code
-- [ ] release (.dmg/.exe)
 - [ ] ...
 
-5.TEST
+5.BUILD
+- [x] qmake
+- [x] cmake
+
+6.TEST
 - [x] simulation - (utilized [unslave.exe](https://unserver.xyz/docs/unslave/#tcp-section) installed on a Windows PC)
 - [x] on real device
+
+7.TODO
+- [ ] page the setup widget according to the mode
+- [ ] use table/model/**delegate** design pattern
+- [ ] add write mode
+- [ ] 16-bit register read/write (process data)
+- [ ] merge the successive query to speed up
+- [ ] page the data according to different display order
+- [ ] add Demonstration(gif/video) to readme
+- [ ] modelize the code
+- [ ] release (.dmg/.exe)
+
 
 
 ## Perequisites
 
 ```c++
 void prerequisites(){
-    download and install QtCreator; 
+    download and install the QtCreator; 
     // high-version qt may not have QSerialPort module installed
     if(the version u chose does not include QSerialPort module){
         find QT maintenance tool in the Qt folder;
@@ -65,10 +80,21 @@ For VSCode, you can refer to [this](https://www.cnblogs.com/zhiyiYo/p/14877952.h
 
 ## Usage
 
+```
+git clone -b main https://github.com/LysanderT/Modbus-Client-App ;
+```
+
 ```c++
-void use(){
-    double click the ModbusQT.pro file;
-    click the run button;
+void run_with_qmake(){
+    double click the ModbusQT.pro file in the Modbus-Client-App folder (which will open the project in Qt Creator);
+
+    click the run button in the bottom left corner of Qt Creator;
+}
+
+void run_with_cmake(){
+    double click the CMakeLists.txt file in the Modbus-Client-App folder (which will open the project in Qt Creator)
+    
+    click the run button in the bottom left corner of Qt Creator;
 }
 ```
 
@@ -76,13 +102,14 @@ You can also package the project into an executable file (which is easy using QT
 
 ## Demonstration
 
-should be a video here
+should be a video or gif here
 
 ## Developing Environment
 
 * MacOS Ventura 13.1
 * Qt 6.2.3
 * QtCreator 7.0.2
+* CMake 3.26.4
 
 ## To contribute
 
