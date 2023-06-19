@@ -22,6 +22,8 @@ set(PROJECT_SOURCES
         dialog.cpp
         dialog.h
         dialog.ui
+        tmodel.hpp
+        delegate.hpp
         README.md
 )
 

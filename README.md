@@ -49,15 +49,17 @@ Given that there is currently no open-source & cross-platform Modbus client soft
 - [x] on real device
 
 7.TODO
-- [ ] page the setup widget according to the mode
-- [ ] use table/model/**delegate** design pattern
+- [x] decoupling using MVC design pattern (table/model/**delegate** in qt)
+- [x] modelize the code
+- [x] page the setup widget according to the mode
+- [x] minimize the cell width to make the window look better
+- [ ] merge the successive query to speed up
+- [ ] use multitread programming to speed up
 - [ ] add write mode
 - [ ] 16-bit register read/write (process data)
-- [ ] merge the successive query to speed up
-- [ ] page the data according to different display order
+- [ ] page the data according to different display order or [sorting](https://blog.51cto.com/quantfabric/1879125)
 - [ ] add Demonstration(gif/video) to readme
-- [ ] modelize the code
-- [ ] release (.dmg/.exe)
+- [ ] release (.dmg/.exe/.deb/.rpm) using CMake
 
 
 
@@ -118,3 +120,8 @@ should be a video or gif here
 3. back to the original repo and raise the Pull Request
 
 👍 any contribution is welcome!
+
+
+[//]: 能否在click+/-button时知道自己的index？？？
+[//]: 可以在tableview发出信号clicked(index)的时候，用index.col()确定是否是-/+号，用index.row()来判断删/增哪一行
+[//]: 加号就放最下面吧，省力。。。。

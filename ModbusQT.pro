@@ -17,8 +17,10 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    delegate.hpp \
     dialog.h \
-    mainwindow.h
+    mainwindow.h \
+    tmodel.hpp
 
 FORMS += \
     dialog.ui \

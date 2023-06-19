@@ -11,6 +11,9 @@
 #include <QHostAddress>
 #include <QMap>
 
+#include "delegate.hpp"
+#include "tmodel.hpp"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -22,18 +25,22 @@ class MainWindow : public QMainWindow
 signals: void click_minus(int);
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void setModel(TModel& m);
 
+    void setDelegate(int index,DataTypeDelegate&x);
+    void setDelegate(int index,FunctionCodeDelegate&x);
+    void setDelegate(int index,DeleteDelegate&x);
+    Ui::MainWindow *ui;
 public slots:
     void exportData(int);
 
 private slots:
-//    void _changeText();
-    // open the selected serial port
-    void _click_PortButton();
+    // open the selected/input port
+    void openPort();
     // send modbus frame
-    void _click_ModbusButton();
+    void sendData();
 //    void _click_ModbusButton_Test();
     // add new row
     void _click_PlusButton();
@@ -49,13 +56,8 @@ private slots:
     void _hostError();
 
 private:
-    Ui::MainWindow *ui;
     QSerialPort *serial;
-    QStandardItemModel* model;
-    QVector<QComboBox*> list_funcCode;
-    QVector<QPushButton*> list_minusButton;
-    QVector<QComboBox*> list_dataType;
-    QPushButton * plusButton;
+    TModel* model;
     QTcpSocket * socket;
     QByteArray receiveBuf;
     int baudRate;
@@ -69,5 +71,6 @@ private:
     void initConnection();
     bool constructFrame(int);
     QMap<int,int> row_mp;
+
 };
 #endif // MAINWINDOW_H

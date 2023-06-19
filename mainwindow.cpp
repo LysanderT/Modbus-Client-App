@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QTextEdit>
+#include <QModelIndex>
 
 // static look-up table (CRC-16)
 QVector<unsigned char> CRC_lo = {
@@ -78,7 +79,6 @@ MainWindow::~MainWindow()
     delete ui;
     delete serial;
     delete model;
-    delete plusButton;
 }
 
 //void MainWindow::_changeText(){
@@ -112,10 +112,10 @@ MainWindow::~MainWindow()
 //    }
 //}
 
-void MainWindow::_click_PortButton(){
-    qDebug() << ui->PortButton->text();
-    if(mode==0){
-        if (ui->PortButton->text() == tr("打开串口")){
+void MainWindow::openPort(){
+    if(ui->tabWidget->currentIndex()==0){
+        qDebug() << ui->rtu_button->text();
+        if (ui->rtu_button->text() == tr("打开串口")){
             serial->setPortName(ui->comboBox_port->currentText());
             baudRate=ui->comboBox_baudRate->currentText().toInt();
             serial->setBaudRate(baudRate);
@@ -141,9 +141,9 @@ void MainWindow::_click_PortButton(){
 
                 ui->comboBox_baudRate->setEnabled(false);
                 ui->comboBox_parity->setEnabled(false);
-                ui->comboBox_mode->setEnabled(false);
+                ui->tabWidget->tabBar()->setTabEnabled(1,false);
                 ui->ModbusButton->setEnabled(true);
-                ui->PortButton->setText(tr("关闭串口"));
+                ui->rtu_button->setText(tr("关闭串口"));
                 // ***
                 connect(serial, &QSerialPort::readyRead, this, &MainWindow::_receiveData);
                 qDebug() << "serial handle:" << serial->handle();
@@ -159,13 +159,13 @@ void MainWindow::_click_PortButton(){
 
             ui->comboBox_baudRate->setEnabled(true);
             ui->comboBox_parity->setEnabled(true);
-            ui->comboBox_mode->setEnabled(true);
-            ui->PortButton->setText(tr("打开串口"));
+            ui->tabWidget->tabBar()->setTabEnabled(1,true);
+            ui->rtu_button->setText(tr("打开串口"));
             ui->ModbusButton->setEnabled(false);
             disconnect(serial, &QSerialPort::readyRead, this, &MainWindow::_receiveData);
         }
-    }else if(mode==1){
-        if(ui->PortButton->text()==tr("TCP连接")){
+    }else if(ui->tabWidget->currentIndex()==1){
+        if(ui->tcp_button->text()==tr("TCP连接")){
             QString address = ui->lineEdit_address->text().toLatin1();
             qDebug() << "address:" << address;
             quint16 port = ui->lineEdit_port->text().toUShort();
@@ -176,10 +176,9 @@ void MainWindow::_click_PortButton(){
                 ui->lineEdit_address->setEnabled(false);
                 ui->lineEdit_port->setEnabled(false);
                 ui->lineEdit_delay->setEnabled(false);
-
-                ui->comboBox_mode->setEnabled(false);
+                ui->tabWidget->tabBar()->setTabEnabled(0,false);
                 ui->ModbusButton->setEnabled(true);
-                ui->PortButton->setText(tr("断开连接"));
+                ui->tcp_button->setText(tr("断开连接"));
                 connect(socket, &QTcpSocket::readyRead, this, &MainWindow::_receiveData);
                 connect(socket,&QAbstractSocket::disconnected,this,&MainWindow::_hostError);
             }else{
@@ -196,10 +195,9 @@ void MainWindow::_click_PortButton(){
                 ui->lineEdit_address->setEnabled(true);
                 ui->lineEdit_port->setEnabled(true);
                 ui->lineEdit_delay->setEnabled(true);
-
-                ui->comboBox_mode->setEnabled(true);
+                ui->tabWidget->tabBar()->setTabEnabled(0,true);
                 ui->ModbusButton->setEnabled(false);
-                ui->PortButton->setText(tr("TCP连接"));
+                ui->tcp_button->setText(tr("TCP连接"));
                 disconnect(socket, &QTcpSocket::readyRead, this, &MainWindow::_receiveData);
             }else{
                 qDebug() << "fail to break TCP connection";
@@ -216,7 +214,7 @@ void Delay_MSec(unsigned int msec)
     loop.exec();//事件循环开始执行，程序会卡在这里，直到定时时间到，本循环被退出
 }
 
-void MainWindow::_click_ModbusButton(){
+void MainWindow::sendData(){
     row_mp.clear(); // reset row_mp
     receive_index = 0;  // ***reset receive_index
     QProgressDialog progress("进度","停止",0,model->rowCount()-1);
@@ -225,7 +223,7 @@ void MainWindow::_click_ModbusButton(){
     progress.show();
     progress.setAttribute(Qt::WA_DeleteOnClose,true);
     int delay = mode==0?3.5*11*1000/baudRate+1:ui->lineEdit_delay->text().toInt();
-    for(int i=0; i<model->rowCount()-1; i++) {
+    for(int i=0; i<model->rowCount(); i++) {
         // process task
         bool res = constructFrame(i);
         if(res){
@@ -285,70 +283,71 @@ void MainWindow::_click_ModbusButton(){
 //}
 
 void MainWindow::_click_PlusButton(){
-    int index = model->rowCount()-1;
-    // add row
-    model->setRowCount(index+2);
-    // add funcCode
-    QComboBox* cmb = new QComboBox();
-    list_funcCode.append(cmb);
-    cmb->addItems({"01", "02","03","04","05","06"});
-    cmb->setCurrentIndex(list_funcCode.at(index-1)->currentIndex());
-    ui->tableView->setIndexWidget(model->index(index, 2), cmb);
-    // add dataType
-    QComboBox* dat = new QComboBox();
-    list_dataType.append(dat);
-    dat->addItems({"整型","小数","布尔型","无符号整数"});
-    dat->setCurrentIndex(list_dataType.at(index-1)->currentIndex());
-    ui->tableView->setIndexWidget(model->index(index, 5), dat);
-    // add minus button
-    QPushButton*pub = new QPushButton();
-    list_minusButton.append(pub);
-    pub->setText("-");
-    ui->tableView->setIndexWidget(model->index(index,0),pub);
-    ui->tableView->setColumnWidth(0, 20);
-    pub->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    connect(pub,&QPushButton::clicked,this,[=](){ // must be '=' instead of '&' !!!
-        bool flag = true;
-        for(int i=0; i<list_minusButton.size(); i++){
-            if(list_minusButton.at(i)==pub){
-                emit click_minus(i);
-                flag = false;
-                break;
-            }
-        }
-        if(flag) qDebug() << "click_minus EMITION ERROR.";
-    });
-    // set default of 从站地址
-    int unit = model->item(index-1,4)->text().toInt(nullptr,16);
-    QString str = QString("%1").arg(unit,2,16,QLatin1Char('0'));
-    model->setItem(index, 1, new QStandardItem(str));
-    // set default of 单位长度
-    unit = model->item(index-1,4)->text().toInt();
-    str = QString::number(unit);
-    model->setItem(index, 4, new QStandardItem(str));
-    // set default of 起始地址
-    str = QString::number(unit,16);
-    int x = model->item(index-1,3)->text().toInt(nullptr,16);
-    int y = str.toInt(nullptr,16);
-    str =  QString("%1").arg(x+y,4,16,QLatin1Char('0'));//value为int型或char型都可
-    model->setItem(index,3,new QStandardItem(str));
-    // set default of 变比
-    QString str2 = QString("%1").arg(model->item(index-1,6)->text().toFloat());
-    model->setItem(index, 6, new QStandardItem(str2));
-    // reset plusButton
-    plusButton = new QPushButton();
-    plusButton->setText("+");
-    ui->tableView->setIndexWidget(model->index(index+1,0),plusButton);
-    connect(plusButton,SIGNAL(clicked()),this,SLOT(_click_PlusButton()));
-    // mv the slider of verticalScrollBar to the bottom
-    ui->tableView->scrollToBottom();
-//    // debug
-//    if(model->data(model->index(index-1,6)).isValid()){
-//    qDebug() << model->item(index-1,6)->text();
-//    }else{
-//        qDebug() << "data invalid!";
-//    }
-    qDebug() << "add line:" << index+1;
+//    int index = model->rowCount()-1;
+//    // add row
+//    model->setRowCount(index+2);
+//    // add funcCode
+//    QComboBox* cmb = new QComboBox();
+//    list_funcCode.append(cmb);
+//    cmb->addItems({"01", "02","03","04","05","06"});
+//    cmb->setCurrentIndex(list_funcCode.at(index-1)->currentIndex());
+//    ui->tableView->setIndexWidget(model->index(index, 2), cmb);
+//    // add dataType
+//    QComboBox* dat = new QComboBox();
+//    list_dataType.append(dat);
+//    dat->addItems({"整型","小数","布尔型","无符号整数"});
+//    dat->setCurrentIndex(list_dataType.at(index-1)->currentIndex());
+//    ui->tableView->setIndexWidget(model->index(index, 5), dat);
+//    // add minus button
+//    QPushButton*pub = new QPushButton();
+//    list_minusButton.append(pub);
+//    pub->setText("-");
+//    ui->tableView->setIndexWidget(model->index(index,0),pub);
+//    ui->tableView->setColumnWidth(0, 20);
+//    pub->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+//    connect(pub,&QPushButton::clicked,this,[=](){ // must be '=' instead of '&' !!!
+//        bool flag = true;
+//        for(int i=0; i<list_minusButton.size(); i++){
+//            if(list_minusButton.at(i)==pub){
+//                emit click_minus(i);
+//                flag = false;
+//                break;
+//            }
+//        }
+//        if(flag) qDebug() << "click_minus EMITION ERROR.";
+//    });
+//    // set default of 从站地址
+//    int unit = model->item(index-1,4)->text().toInt(nullptr,16);
+//    QString str = QString("%1").arg(unit,2,16,QLatin1Char('0'));
+//    model->setItem(index, 1, new QStandardItem(str));
+//    // set default of 单位长度
+//    unit = model->item(index-1,4)->text().toInt();
+//    str = QString::number(unit);
+//    model->setItem(index, 4, new QStandardItem(str));
+//    // set default of 起始地址
+//    str = QString::number(unit,16);
+//    int x = model->item(index-1,3)->text().toInt(nullptr,16);
+//    int y = str.toInt(nullptr,16);
+//    str =  QString("%1").arg(x+y,4,16,QLatin1Char('0'));//value为int型或char型都可
+//    model->setItem(index,3,new QStandardItem(str));
+//    // set default of 变比
+//    QString str2 = QString("%1").arg(model->item(index-1,6)->text().toFloat());
+//    model->setItem(index, 6, new QStandardItem(str2));
+//    // reset plusButton
+//    plusButton = new QPushButton();
+//    plusButton->setText("+");
+//    ui->tableView->setIndexWidget(model->index(index+1,0),plusButton);
+//    connect(plusButton,SIGNAL(clicked()),this,SLOT(_click_PlusButton()));
+//    // mv the slider of verticalScrollBar to the bottom
+//    ui->tableView->scrollToBottom();
+////    // debug
+////    if(model->data(model->index(index-1,6)).isValid()){
+////    qDebug() << model->item(index-1,6)->text();
+////    }else{
+////        qDebug() << "data invalid!";
+////    }
+//    qDebug() << model->data(model->index(index,2));
+//    qDebug() << "add line:" << index+1;
 }
 
 void MainWindow::_click_MinusButton(int msg){
@@ -356,12 +355,7 @@ void MainWindow::_click_MinusButton(int msg){
     if(!model->removeRow(msg)){
         qDebug() << "REMOVEROW ERROR";
     }
-    delete *(list_minusButton.begin()+msg);
-    list_minusButton.erase(list_minusButton.begin()+msg);
-    delete *(list_dataType.begin()+msg);
-    list_dataType.erase(list_dataType.begin()+msg);
-    delete *(list_funcCode.begin()+msg);
-    list_funcCode.erase(list_funcCode.begin()+msg);
+
     qDebug() << "remove line:" << msg+1;
 }
 
@@ -374,6 +368,7 @@ void MainWindow::_click_DataButton(){
 void MainWindow::_receiveData(){
     QByteArray buf;
     qDebug() << "readData: ";
+    int mode = ui->tabWidget->currentIndex();
     if(mode==1){buf = socket->readAll();}
     else if(mode==0){buf = serial->readAll();}
     if(buf.isEmpty()){return;}
@@ -392,16 +387,18 @@ void MainWindow::_receiveData(){
     int tcp_index = receiveBuf.at(0)*32;
     tcp_index+=receiveBuf.at(1);
     tcp_index=row_mp[tcp_index];
-    int index=mode==1?tcp_index:receive_index;
-    model->setItem(index, 9, new QStandardItem(curr_data));
+    int index=ui->tabWidget->currentIndex()==1?tcp_index:receive_index;
+    model->setData(model->index(index,9),curr_data);
     if(isValidIndex(index,6)){
-        int ratio = model->item(index,6)->text().toInt();
-        QString real_data = QString::number(val*ratio,16);
-        model->setItem(index,10,new QStandardItem(real_data));
+        double ratio = model->data(model->index(index,6)).toDouble();
+        QString real_data = QString::number(ratio*curr_data.toDouble());
+        model->setData(model->index(index,10),real_data);
     }
     if(mode==0){receive_index++;}
-//                    ui->textBrowser_receive->append(receiveBuf.sliced(0,6+num));
-//                    ui->textBrowser_receive->append("\n");
+    // ------log info
+    ui->textBrowser->append(receiveBuf.sliced(0,6+num));
+    ui->textBrowser->append("\n");
+    // ---------
     receiveBuf.remove(0,6+num);
 //                QString y = x.sliced(0,2).toHex();
 //                int z=y.toInt(nullptr,16);
@@ -486,7 +483,7 @@ void MainWindow::exportData(int msg)
 }
 
 bool MainWindow::isValidIndex(int x, int y){
-    return model->index(x,y).isValid() && model->item(x,y)->text()!="";
+    return model->index(x,y).isValid() && x<model->rowCount() && y<model->columnCount() && model->data(model->index(x,y)).toString()!="";
 }
 
 void append_CRC(QByteArray& frame){
@@ -505,6 +502,10 @@ void append_CRC(QByteArray& frame){
 }
 
 void MainWindow::initSetup(){
+    // set mode name
+    ui->tabWidget->setTabText(0,"RTU");
+    ui->tabWidget->setTabText(1,"TCP");
+
     QString description;
     QString manufacturer;
     QString serialNumber;
@@ -512,8 +513,6 @@ void MainWindow::initSetup(){
     ui->comboBox_port->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     ui->comboBox_baudRate->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     ui->comboBox_parity->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-    ui->comboBox_mode->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-    ui->PortButton->setFixedWidth(100);
     // find available ports
     QList<QSerialPortInfo> serialPortInfos = QSerialPortInfo::availablePorts();
     // uncomment the line below to output the number of available ports
@@ -546,9 +545,6 @@ void MainWindow::initSetup(){
     ui->comboBox_parity->addItem(tr("Even"), 2);
     ui->comboBox_parity->addItem(tr("Odd"), 3);
     ui->comboBox_parity->addItem(tr("None"), 0);
-    // fill comboBox_mode
-    ui->comboBox_mode->addItem(tr("RTU"),0);
-    ui->comboBox_mode->addItem(tr("TCP"),1);
 //    // fill comboBox_func
 //    ui->comboBox_func->addItem(QStringLiteral("01"),1);
 //    ui->comboBox_func->addItem(QStringLiteral("02"),2);
@@ -560,100 +556,147 @@ void MainWindow::initSetup(){
 //    ui->label_x->setText(QStringLiteral("起始地址："));
 //    ui->label_y->setText(QStringLiteral("线圈数量："));
     // set unable
-    ui->lineEdit_address->setEnabled(false);
-    ui->lineEdit_address->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
-    ui->lineEdit_port->setEnabled(false);
-    ui->lineEdit_port->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
-    ui->lineEdit_delay->setEnabled(false);
-    ui->lineEdit_delay->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
+
+//    ui->lineEdit_address->setEnabled(false);
+//    ui->lineEdit_address->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
+//    ui->lineEdit_port->setEnabled(false);
+//    ui->lineEdit_port->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
+//    ui->lineEdit_delay->setEnabled(false);
+//    ui->lineEdit_delay->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
 
 }
 
+void MainWindow::setModel(TModel &m){
+    ui->tableView->setModel(&m);
+    model = &m;
+    qDebug() << &*model;
+    ui->tableView->setColumnWidth(0,25);
+    for(int i=1;i<m.columnCount();i++){
+        ui->tableView->setColumnWidth(i,60);
+    }
+    connect(ui->plusButton,&QPushButton::clicked,model,&TModel::appendRow);
+    connect(ui->plusButton,&QPushButton::clicked,ui->tableView,&QTableView::scrollToBottom);
+    connect(ui->tableView,SIGNAL(clicked(QModelIndex)),model,SLOT(remove_when_click(QModelIndex)));
+    connect(ui->tableView,&QTableView::clicked,this,[&](QModelIndex i){qDebug() << "mouse click:" << i.row() << i.column() << "行数："<<i.row()+1 ;});
+}
+
+void MainWindow::setDelegate(int index,DataTypeDelegate&x){
+    ui->tableView->setItemDelegateForColumn(index,&x);
+}
+void MainWindow::setDelegate(int index,FunctionCodeDelegate&x){
+    ui->tableView->setItemDelegateForColumn(index,&x);
+}
+void MainWindow::setDelegate(int index,DeleteDelegate&x){
+    ui->tableView->setItemDelegateForColumn(index,&x);
+}
 void MainWindow::initTabelview(){
-    model = new QStandardItemModel();
-    ui->tableView->setModel(model);
+
+    // -----------mvc
+//    ui->tableView->setModel(model);
+//    ui->tableView->setItemDelegateForColumn(0,&x);
+//    ui->tableView->setItemDelegateForColumn(2, &fcd);
+//    ui->tableView->setItemDelegateForColumn(5,&dtd);
+
+//    ui->tableView->setMinimumWidth(700);
+//    for(int i=1;i<model->columnCount();i++){
+//        ui->tableView->setColumnWidth(i,70);
+//    }
+//    ui->tableView->setColumnWidth(0,25);
+//    model->appendRow();
+//    model->appendRow();
+   // --------------
+
+//    model = new QStandardItemModel(2,11);
     ui->tableView->setFocusPolicy(Qt::NoFocus); //去掉选中单元格时的虚框
-    model->setHorizontalHeaderLabels({"","从站地址(0x)","功能码", "起始地址(0x)", "单位长度","数据类型","变比","数据库变量", "单位","当前值","实际值"});
-    model->setItem(0,1,new QStandardItem("01"));
-    model->setItem(0, 3, new QStandardItem("0000"));
-    model->setItem(0,4,new QStandardItem("1"));
-    model->setItem(0,6,new QStandardItem("1"));
-    model->setRowCount(2);
-    //ui->tableView->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);// 自适应第一列？？
-    // initialize the first comboBox and list_funcCode
-    QComboBox* func = new QComboBox();
-    list_funcCode.append(func);
-    func->addItems({"01", "02","03","04","05","06"});
-    ui->tableView->setIndexWidget(model->index(0, 2), func);
+//    model->setHorizontalHeaderLabels({"","从站地址(0x)","功能码", "起始地址(0x)", "单位长度","数据类型","变比","数据库变量", "单位","当前值","实际值"});
+//    model->setItem(0,1,new QStandardItem("01"));
+//    model->setItem(0, 3, new QStandardItem("0000"));
+//    model->setItem(0,4,new QStandardItem("1"));
+//    model->setItem(0,6,new QStandardItem("1"));
+//    model->setRowCount(2);
+//    //ui->tableView->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);// 自适应第一列？？
+//     //initialize the first comboBox and list_funcCode
 
-    // initialize the second comboBox and list_dataType
-    QComboBox* dat = new QComboBox();
-    list_dataType.append(dat);
-    dat->addItems({"整型","小数","布尔型","无符号整数"});
-    ui->tableView->setIndexWidget(model->index(0, 5), dat);
 
-    // initialize the minus button filler and list_minusButton
-    QPushButton*pub = new QPushButton();
-    list_minusButton.append(pub);
-    ui->tableView->setColumnWidth(0, 20);
-    model->setItem(0,0,new QStandardItem(""));
-    model->item(0,0)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
 
-    // initialize the plus button
-    plusButton = new QPushButton();
-    plusButton->setText("+");
-    ui->tableView->setIndexWidget(model->index(1,0),plusButton);
+//    QComboBox* func = new QComboBox();
+//    list_funcCode.append(func);
+//    func->addItems({"01", "02","03","04","05","06"});
+//    ui->tableView->setIndexWidget(model->index(0, 2), func);
+
+//    //initialize the second comboBox and list_dataType
+//    QComboBox* dat = new QComboBox();
+//    list_dataType.append(dat);
+//    dat->addItems({"整型","小数","布尔型","无符号整数"});
+//    ui->tableView->setIndexWidget(model->index(0, 5), dat);
+
+//    // initialize the minus button filler and list_minusButton
+//    QPushButton*pub = new QPushButton();
+//    list_minusButton.append(pub);
+//    ui->tableView->setColumnWidth(0, 20);
+//    model->setItem(0,0,new QStandardItem(""));
+//    model->item(0,0)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+
+//    // initialize the plus button
+//    plusButton = new QPushButton();
+//    plusButton->setText("+");
+//    ui->tableView->setIndexWidget(model->index(1,0),plusButton);
 }
 
 void MainWindow::initConnection(){
-    // change text corresponding to different function code
-//    connect(ui->comboBox_func,SIGNAL(currentTextChanged(QString)),this,SLOT(_changeText()));
-    // change mode
-    connect(ui->comboBox_mode,SIGNAL(currentTextChanged(QString)),this,SLOT(_changeMode(QString)));
-    // PortButton connection
-    connect(ui->PortButton,SIGNAL(clicked()),this,SLOT(_click_PortButton()));
-    ui->ModbusButton->setEnabled(false);
-    // Modbus Test
-    //connect(ui->ModbusButton,SIGNAL(clicked()),this,SLOT(_click_ModbusButton_Test()));
-    // ModusButton connection
-    connect(ui->ModbusButton,SIGNAL(clicked()),this,SLOT(_click_ModbusButton()));
-    // PlusButton connection
-    connect(plusButton,SIGNAL(clicked()),this,SLOT(_click_PlusButton()));
-    // MinusButton connection
-    connect(this,&MainWindow::click_minus,this,&MainWindow::_click_MinusButton);
-    // DataButton connection
+    //connect(ui->tabWidget,&QTabWidget::currentChanged,this,&MainWindow::_click_PortButton);
+    connect(ui->tcp_button,&QPushButton::clicked,this,&MainWindow::openPort);
+    connect(ui->rtu_button,&QPushButton::clicked,this,&MainWindow::openPort);
+    connect(ui->ModbusButton,&QPushButton::clicked,this,&MainWindow::sendData);
+    // change text corresponding to different
+    // connect(ui->comboBox_func,SIGNAL(currentTextChanged(QString)),this,SLOT(_changeText()));
+//    // change mode
+
+//    connect(ui->comboBox_mode,SIGNAL(currentTextChanged(QString)),this,SLOT(_changeMode(QString)));
+//    // PortButton connection
+//    connect(ui->PortButton,SIGNAL(clicked()),this,SLOT(_click_PortButton()));
+//    ui->ModbusButton->setEnabled(false);
+//    // Modbus Test
+//    connect(ui->ModbusButton,SIGNAL(clicked()),this,SLOT(_click_ModbusButton_Test()));
+//    // ModusButton connection
+//    connect(ui->ModbusButton,SIGNAL(clicked()),this,SLOT(_click_ModbusButton()));
+//    // PlusButton connection
+
+//    // MinusButton connection
+//    connect(this,&MainWindow::click_minus,this,&MainWindow::_click_MinusButton);
+//    // DataButton connection
     connect(ui->DataButton,SIGNAL(clicked()),this,SLOT(_click_DataButton()));
 }
 
 void MainWindow::_changeMode(QString msg){
-    qDebug() << msg << "mode";
-    if(msg=="RTU"){
-        mode = 0;
-        ui->PortButton->setText("打开串口");
-        ui->lineEdit_address->setEnabled(false);
-        ui->lineEdit_address->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
-        ui->lineEdit_port->setEnabled(false);
-        ui->lineEdit_port->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
-        ui->lineEdit_delay->setEnabled(false);
-        ui->lineEdit_delay->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
-        ui->comboBox_port->setEnabled(true);
-        ui->comboBox_baudRate->setEnabled(true);
-        ui->comboBox_parity->setEnabled(true);
-    }else if(msg=="TCP"){
-        mode = 1;
-        ui->PortButton->setText("TCP连接");
-        ui->lineEdit_address->setEnabled(true);
-        ui->lineEdit_address->setStyleSheet("QLineEdit { background: rgb(255, 255, 255)}");
-        ui->lineEdit_port->setEnabled(true);
-        ui->lineEdit_port->setStyleSheet("QLineEdit { background: rgb(255, 255, 255)}");
-        ui->lineEdit_delay->setEnabled(true);
-        ui->lineEdit_delay->setStyleSheet("QLineEdit { background: rgb(255, 255, 255)}");
-        ui->comboBox_port->setEnabled(false);
-        ui->comboBox_baudRate->setEnabled(false);
-        ui->comboBox_parity->setEnabled(false);
-    }else{
-        qDebug() << "CHANGE MODE ERROR";
-    }
+//    qDebug() << msg << "mode";
+//    if(msg=="RTU"){
+//        mode = 0;
+//        ui->PortButton->setText("打开串口");
+//        ui->lineEdit_address->setEnabled(false);
+//        ui->lineEdit_address->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
+//        ui->lineEdit_port->setEnabled(false);
+//        ui->lineEdit_port->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
+//        ui->lineEdit_delay->setEnabled(false);
+//        ui->lineEdit_delay->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
+//        ui->comboBox_port->setEnabled(true);
+//        ui->comboBox_baudRate->setEnabled(true);
+//        ui->comboBox_parity->setEnabled(true);
+//    }else if(msg=="TCP"){
+//        mode = 1;
+//        ui->PortButton->setText("TCP连接");
+//        ui->lineEdit_address->setEnabled(true);
+//        ui->lineEdit_address->setStyleSheet("QLineEdit { background: rgb(255, 255, 255)}");
+//        ui->lineEdit_port->setEnabled(true);
+//        ui->lineEdit_port->setStyleSheet("QLineEdit { background: rgb(255, 255, 255)}");
+//        ui->lineEdit_delay->setEnabled(true);
+//        ui->lineEdit_delay->setStyleSheet("QLineEdit { background: rgb(255, 255, 255)}");
+//        ui->comboBox_port->setEnabled(false);
+//        ui->comboBox_baudRate->setEnabled(false);
+//        ui->comboBox_parity->setEnabled(false);
+//    }else{
+//        qDebug() << "CHANGE MODE ERROR";
+//    }
 }
 
 void MainWindow::_hostError(){
@@ -661,35 +704,34 @@ void MainWindow::_hostError(){
     ui->lineEdit_address->setEnabled(true);
     ui->lineEdit_port->setEnabled(true);
     ui->lineEdit_delay->setEnabled(true);
-
-    ui->comboBox_mode->setEnabled(true);
+    ui->tabWidget->tabBar()->setTabEnabled(0,true);
     ui->ModbusButton->setEnabled(false);
-    ui->PortButton->setText(tr("TCP连接"));
+    ui->tcp_button->setText(tr("TCP连接"));
     disconnect(socket, &QTcpSocket::readyRead, this, &MainWindow::_receiveData);
 }
-bool MainWindow::constructFrame(int index){
+bool MainWindow::constructFrame(int row_index){
     QString str;
-    if(mode==1){
+    if(ui->tabWidget->currentIndex()==1){
         str.append(QString("%1").arg(transaction,4,16,QLatin1Char('0')));
-        row_mp[transaction] = index;
+        row_mp[transaction] = row_index;
         transaction+=1;
         str.append("0000"); // label: modbus
         str.append("0006"); // for single read/write
     }
-    int res = isValidIndex(index,1) && isValidIndex(index,3) && isValidIndex(index,4);
+    int res = isValidIndex(row_index,1) && isValidIndex(row_index,3) && isValidIndex(row_index,4);
     if(!res){qDebug() << "Invalid index! Fail to send.";return false;}
-    str.append(model->item(index,1)->text()); // address of slave
-    str.append(list_funcCode.at(index)->currentText());
-    str.append(model->item(index,3)->text()); // start address
+    str.append(model->data(model->index(row_index,1)).toString()); // address of slave
+    str.append(model->data(model->index(row_index,2)).toString()); // function code
+    str.append(model->data(model->index(row_index,3)).toString()); // start address
     str.append("0001"); // one for each query
 //    str.append(model->item(index,4)->text()->toInt(16)); // data length
     QByteArray frame = QByteArray::fromHex(str.toLatin1());
     res=0;
-    if(mode==0){
+    if(ui->tabWidget->currentIndex()==0){
         append_CRC(frame);
         res = serial->write(frame);
         serial->flush();
-    }else if(mode==1){
+    }else if(ui->tabWidget->currentIndex()==1){
         res = socket->write(frame);
         socket->flush();
     }
