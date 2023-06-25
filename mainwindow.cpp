@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "dialog.h"
+#include "export_dialog.h"
 #include <iostream>
 #include <QFileDialog>
 #include <QDebug>
@@ -149,6 +149,7 @@ void MainWindow::openPort(){
                 qDebug() << "serial handle:" << serial->handle();
             }else{
                 qDebug() << "error: fail to open";
+                QMessageBox::critical(this, "连接失败","\n串口打开失败！请检查驱动版本是否正确以及串口占用情况。");
             }
         }else{
             //close the serial port
@@ -184,7 +185,7 @@ void MainWindow::openPort(){
             }else{
                 qDebug() << "fail to connect TCP";
                 socket->disconnectFromHost();
-                QMessageBox::critical(this, "连接超时","连接失败！请检查ip地址/端口号是否正确以及服务器在线情况。");
+                QMessageBox::critical(this, "连接超时","\n连接失败！请检查ip地址/端口号是否正确以及服务器在线情况。");
             }
         }else{
             // break the TCP connection
@@ -201,7 +202,7 @@ void MainWindow::openPort(){
                 disconnect(socket, &QTcpSocket::readyRead, this, &MainWindow::_receiveData);
             }else{
                 qDebug() << "fail to break TCP connection";
-                QMessageBox::critical(this,"错误","断开TCP连接失败！");
+                QMessageBox::critical(this,"错误","\n断开TCP连接失败！");
             }
         }
     }
@@ -215,6 +216,7 @@ void Delay_MSec(unsigned int msec)
 }
 
 void MainWindow::sendData(){
+    if(model->rowCount()==0){return;}
     row_mp.clear(); // reset row_mp
     receive_index = 0;  // ***reset receive_index
     QProgressDialog progress("进度","停止",0,model->rowCount()-1);
@@ -222,23 +224,76 @@ void MainWindow::sendData(){
 //    progress.setWindowModality(Qt::WindowModal);
     progress.show();
     progress.setAttribute(Qt::WA_DeleteOnClose,true);
-    int delay = mode==0?3.5*11*1000/baudRate+1:ui->lineEdit_delay->text().toInt();
-    for(int i=0; i<model->rowCount(); i++) {
-        // process task
-        bool res = constructFrame(i);
+    int delay = ui->tabWidget->currentIndex()==0?3.5*11*1000/baudRate+1:ui->lineEdit_delay->text().toInt();
+
+    QString last_slave = model->data(0,1).toString();
+    QString last_funccode = model->data(0,2).toString();
+    int last_address = model->data(0,3).toString().toInt(nullptr,16);
+//    int begin_address = last_address; // the leading one of one frame
+    int begin_index = 0;
+//    int last_length = model->data(0,4).toString().toInt();
+
+   // 或许要考虑长度 int last unit = x;
+    for(int i=1; i<=model->rowCount();i++){
+        QString curr_slave = model->data(i,1).toString();
+        QString curr_funccode = model->data(i,2).toString();
+        int curr_address = model->data(i,3).toString().toInt(nullptr,16);
+//        int curr_length = model->data(i,4).toString().toInt();
+
+        progress.setValue(i-1);
+
+//        if(i!=model->rowCount()&&curr_slave==last_slave&&curr_funccode==last_funccode&&curr_address==last_address+last_length)
+        if(i!=model->rowCount()&&curr_funccode!="05"&&curr_funccode!="06"&&curr_slave==last_slave&&curr_funccode==last_funccode&&curr_address==last_address+1)
+        {// successive query
+            last_address = curr_address;
+//            last_length = curr_length;
+            continue;
+        }
+        int count = i-begin_index;
+
+        qDebug() << "i:" << i;
+        qDebug() << "curr_address:" << curr_address;
+        qDebug() << "last_address:" << last_address;
+//        qDebug() << "last_length:" << last_length;
+//        qDebug() << "begin_address:" << begin_address;
+        qDebug() << "count:" << count;
+
+        last_slave=curr_slave;
+        last_funccode=curr_funccode;
+        last_address=curr_address;
+//        last_length = curr_length;
+
+//        begin_address = curr_address;
+        bool res = constructFrame(begin_index,count);
+
         if(res){
-            qDebug() << "第"+QString::number(i)+"次报文发送成功";
+            qDebug() << qPrintable("第"+QString::number(begin_index+1))<<"~"<<i<<"行报文发送成功";
         }else{
-            QString output="第"+QString::number(i)+"次报文发送失败";
+            QString output=qPrintable("第"+QString::number(begin_index+1)+"行报文发送失败");
             qDebug() << output;
             QMessageBox::critical(this, "错误",output);
         }
-        // increment
-        progress.setValue(i);
+        begin_index = i;
         QCoreApplication::processEvents();
         QThread::msleep(delay);
         if(progress.wasCanceled()) break;
     }
+//    for(int i=0; i<model->rowCount(); i++) {
+//        // process task
+//        bool res = constructFrame(i);
+//        if(res){
+//            qDebug() << "第"+QString::number(i)+"次报文发送成功";
+//        }else{
+//            QString output="第"+QString::number(i)+"次报文发送失败";
+//            qDebug() << output;
+//            QMessageBox::critical(this, "错误",output);
+//        }
+//        // increment
+//        progress.setValue(i);
+//        QCoreApplication::processEvents();
+//        QThread::msleep(delay);
+//        if(progress.wasCanceled()) break;
+//    }
     qDebug() << "发报结束";
 }
 
@@ -366,40 +421,153 @@ void MainWindow::_click_DataButton(){
 }
 
 void MainWindow::_receiveData(){
+//    QString x = "19";
+//    int y = x.toInt(nullptr,16);
+//    x=x.setNum(y,2);
+//    x=QString("%1").arg(x,8,QLatin1Char('0'));
+//    qDebug() << x;
+
+
+//    QByteArray x = QByteArray::fromHex("9911");
+//    int y = x.at(0)&0xff; // byte存的是char，会变成负数，这样可以转正
+//    QString z = QString("%1").arg(y,8,2,QLatin1Char('0'));
+//    qDebug() << x;
     QByteArray buf;
-    qDebug() << "readData: ";
     int mode = ui->tabWidget->currentIndex();
-    if(mode==1){buf = socket->readAll();}
-    else if(mode==0){buf = serial->readAll();}
+    int prefix_length;
+    if(ui->tabWidget->currentIndex()==1){
+        buf = socket->readAll();
+        prefix_length = 6; // MBAP
+    }
+    else if(ui->tabWidget->currentIndex()==0){
+        buf = serial->readAll();
+        prefix_length = 0;
+    }
     if(buf.isEmpty()){return;}
     receiveBuf.append(buf);
-    if(receiveBuf.size()<6){return;}
-    int num = receiveBuf.at(5);
-    if(receiveBuf.size()<6+num){return;}
-//                    qDebug() << "bytearray:" << receiveBuf;
-//                    QString tmp = receiveBuf.sliced(6+num-2,2).toHex();
-//                    qDebug() << "string:" << tmp;
-//                    int val = tmp.toInt(nullptr,16);
-        // actually need data type identification
-    int val = receiveBuf.at(6+num-1);
-    qDebug() << "int:" << val;
-    QString curr_data = QString::number(val,16);
-    int tcp_index = receiveBuf.at(0)*32;
-    tcp_index+=receiveBuf.at(1);
-    tcp_index=row_mp[tcp_index];
-    int index=ui->tabWidget->currentIndex()==1?tcp_index:receive_index;
-    model->setData(model->index(index,9),curr_data);
-    if(isValidIndex(index,6)){
-        double ratio = model->data(model->index(index,6)).toDouble();
-        QString real_data = QString::number(ratio*curr_data.toDouble());
-        model->setData(model->index(index,10),real_data);
+
+    while(true){ // loop to process data in receiveBuf in a timely manner
+        qDebug() << "size: " << receiveBuf.size();
+        qDebug() << "reciveBuf:" << receiveBuf;
+        if(receiveBuf.size()<prefix_length){break;}
+        int num = receiveBuf.at(prefix_length-1)&0xff; // guarantee positive
+        qDebug() << "num: " << num;
+        if(receiveBuf.size()<prefix_length+num){break;}
+    //                    qDebug() << "bytearray:" << receiveBuf;
+    //                    QString tmp = receiveBuf.sliced(6+num-2,2).toHex();
+    //                    qDebug() << "string:" << tmp;
+    //                    int val = tmp.toInt(nullptr,16);
+            // actually need data type identification
+
+        qDebug() << "----------data received--------------";
+        // ----------log info-----------
+        ui->textBrowser->append("R:"+receiveBuf.sliced(0,prefix_length+num).toHex(' '));
+        //ui->textBrowser->append("\n");
+        // -----------------------------
+        qDebug() << "???";
+        int validbyte = receiveBuf.at(prefix_length-1+3)&0xff;
+//        QString curr_data = QString::number(prefix_length,16);
+        int tcp_index = (receiveBuf.at(0)&0xff)*32;
+        tcp_index+=receiveBuf.at(1)&0xff;
+        //        tcp_index=row_mp[tcp_index];
+        int index=ui->tabWidget->currentIndex()==1?tcp_index:receive_index;
+
+        QString func = model->data(index,2).toString();
+        qDebug() << "func:" << func;
+        if(func=="01"||func=="02"){
+            QString curr_data;
+            QString biArray = "";
+            for(int i=prefix_length-1+4;i<prefix_length-1+4+validbyte;i++)
+            {
+                qDebug() << "loop1";
+                int int_byte = receiveBuf.at(i)&0xff;
+                QString str_byte = QString("%1").arg(int_byte,8,2,QLatin1Char('0'));
+                biArray = str_byte + biArray;
+            }
+            qDebug() << "biArray:" << biArray;
+            int i=biArray.size()-1;
+//            int len;
+            while(i>=0&&index<model->rowCount()){
+                qDebug() << "loop2";
+//                if(func=="01"||func=="02"){len=1;}
+//                else if(func=="03"||func=="04"){len = model->data(index,4).toString().toInt()*8;}
+//                qDebug() << "len:" << len;
+                QString str_data = biArray.at(i);
+                int int_data = str_data.toInt(nullptr,2);
+                model->setData(model->index(index,9),int_data);
+//                QString str_data = biArray.mid(i-len+1,len);
+//                str_data = QString("%1").arg(str_data,len,QLatin1Char('0'));
+//                int int_data = str_data.toInt(nullptr,2);
+//                model->setData(model->index(index,9),QString::number(int_data));
+                if(isValidIndex(index,6)){
+                    double ratio = model->data(index,6).toDouble();
+                    QString real_data = QString::number(ratio*int_data);
+                    model->setData(model->index(index,10),real_data);
+                }
+                index+=1;
+                i-=1;
+            }
+        }
+        else if(func=="03"||func=="04"){
+            int i=prefix_length-1+4;
+            while(i<prefix_length-1+4+validbyte&&index<model->rowCount()){
+                int len_byte = ceil(model->data(index,4).toString().toInt()/8.0);
+                int res=0;
+                qDebug() << "len_byte" << len_byte;
+                while(len_byte>0&&i<prefix_length-1+4+validbyte){
+                    int curr =(receiveBuf.at(i)&0xff)*pow(32,len_byte-1);
+                    qDebug() << "curr:" << curr;
+                    res+=curr;
+                    i++;
+                    len_byte--;
+                }
+                model->setData(model->index(index,9),res);
+                qDebug() << "res" << res;
+                if(isValidIndex(index,6)){
+                    double ratio = model->data(index,6).toDouble();
+                    QString real_data = QString::number(ratio*res);
+                    model->setData(model->index(index,10),real_data);
+                }
+                index++;
+            }
+        }
+        else if(func=="05" || func=="06"){
+            num=6; // to determine the length to be deleted
+            if(isValidIndex(index,6)){
+                int res = model->data(index,9).toString().toInt();
+                double ratio = model->data(index,6).toDouble();
+                QString real_data = QString::number(ratio*res);
+                model->setData(model->index(index,10),real_data);
+            }
+        }else{
+            qDebug() << "ERROR CODE";
+        }
+//        for(int i=prefix_length-1+4;i<prefix_length-1+4+validbyte;i++){
+//            int int_byte = receiveBuf.at(i)&0xff;
+
+//            // analyze the int_byte. 1 bit each by default
+//            // 可能返回的这组数据中，既有要按1bit解析，也有要按8/16解析的
+//            QString str_byte = QString("%1").arg(int_byte,8,2,QLatin1Char('0'));
+//            qDebug() << "str_byte" << str_byte;
+//            for(int it=7;it>=0;it--){
+//                if(str_byte[it]=='1'){
+//                    curr_data = "1"; // for 8/16/32 bit, curr_data = setNum(...);
+//                }else{
+//                    curr_data = "0";
+//                }
+//                model->setData(model->index(index,9),curr_data);
+//                if(isValidIndex(index,6)){
+//                    double ratio = model->data(index,6).toDouble();
+//                    QString real_data = QString::number(ratio*curr_data.toDouble());
+//                    model->setData(model->index(index,10),real_data);
+//                }
+//                index++;
+//            }
+//        }
+        if(mode==0){receive_index++;} // for serial
+        receiveBuf.remove(0,6+num);
+        qDebug() << "------------------------------";
     }
-    if(mode==0){receive_index++;}
-    // ------log info
-    ui->textBrowser->append(receiveBuf.sliced(0,6+num));
-    ui->textBrowser->append("\n");
-    // ---------
-    receiveBuf.remove(0,6+num);
 //                QString y = x.sliced(0,2).toHex();
 //                int z=y.toInt(nullptr,16);
 //        if(mode==0){
@@ -545,6 +713,10 @@ void MainWindow::initSetup(){
     ui->comboBox_parity->addItem(tr("Even"), 2);
     ui->comboBox_parity->addItem(tr("Odd"), 3);
     ui->comboBox_parity->addItem(tr("None"), 0);
+
+
+
+    ui->ModbusButton->setEnabled(false);
 //    // fill comboBox_func
 //    ui->comboBox_func->addItem(QStringLiteral("01"),1);
 //    ui->comboBox_func->addItem(QStringLiteral("02"),2);
@@ -563,21 +735,43 @@ void MainWindow::initSetup(){
 //    ui->lineEdit_port->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
 //    ui->lineEdit_delay->setEnabled(false);
 //    ui->lineEdit_delay->setStyleSheet("QLineEdit { background: rgb(240, 240, 240)}");
+//    QString x = "19";
+//    int y = x.toInt(nullptr,16);
+//    x=x.setNum(y,2);
+//    x=QString("%1").arg(x,8,QLatin1Char('0'));
+//    qDebug() << x;
+//    QByteArray ba = QByteArray::fromHex(x.toLocal8Bit());
+//    qDebug() << ba;
+//    QByteArray x = QByteArray::fromHex("9911");
+//    int y = x.at(0)&0xff; // byte存的是char，会变成负数，这样可以转正
+//    QString z = QString("%1").arg(y,8,2,QLatin1Char('0'));
+//    qDebug() << x;
 
+//    int x = 0x0011;
+//    int y = 16;
+//    int z = x+y;
+//    qDebug() << z;
+//    int x = 11;
+//    QString y = QString("%1").arg(x,4,16);
+//    qDebug() << y;
 }
 
 void MainWindow::setModel(TModel &m){
     ui->tableView->setModel(&m);
     model = &m;
     qDebug() << &*model;
-    ui->tableView->setColumnWidth(0,25);
-    for(int i=1;i<m.columnCount();i++){
+    ui->tableView->setColumnWidth(0,22);
+    ui->tableView->setColumnWidth(1,60);
+    for(int i=1;i<m.columnCount()-2;i++){
         ui->tableView->setColumnWidth(i,60);
     }
+    ui->tableView->setColumnWidth(m.columnCount()-2,65);
+    ui->tableView->setColumnWidth(m.columnCount()-1,65);
+    model->appendRow();
     connect(ui->plusButton,&QPushButton::clicked,model,&TModel::appendRow);
     connect(ui->plusButton,&QPushButton::clicked,ui->tableView,&QTableView::scrollToBottom);
     connect(ui->tableView,SIGNAL(clicked(QModelIndex)),model,SLOT(remove_when_click(QModelIndex)));
-    connect(ui->tableView,&QTableView::clicked,this,[&](QModelIndex i){qDebug() << "mouse click:" << i.row() << i.column() << "行数："<<i.row()+1 ;});
+    //connect(ui->tableView,&QTableView::clicked,this,[&](QModelIndex i){qDebug() << "mouse click:" << i.row() << i.column() << "行数："<<i.row()+1 ;}); // for debug
 }
 
 void MainWindow::setDelegate(int index,DataTypeDelegate&x){
@@ -589,8 +783,11 @@ void MainWindow::setDelegate(int index,FunctionCodeDelegate&x){
 void MainWindow::setDelegate(int index,DeleteDelegate&x){
     ui->tableView->setItemDelegateForColumn(index,&x);
 }
+void MainWindow::setDelegate(int index,LengthDelegate&x){
+    ui->tableView->setItemDelegateForColumn(index,&x);
+}
 void MainWindow::initTabelview(){
-
+    ui->tableView->setSortingEnabled(true);
     // -----------mvc
 //    ui->tableView->setModel(model);
 //    ui->tableView->setItemDelegateForColumn(0,&x);
@@ -607,7 +804,7 @@ void MainWindow::initTabelview(){
    // --------------
 
 //    model = new QStandardItemModel(2,11);
-    ui->tableView->setFocusPolicy(Qt::NoFocus); //去掉选中单元格时的虚框
+    //ui->tableView->setFocusPolicy(Qt::NoFocus); //去掉选中单元格时的虚框
 //    model->setHorizontalHeaderLabels({"","从站地址(0x)","功能码", "起始地址(0x)", "单位长度","数据类型","变比","数据库变量", "单位","当前值","实际值"});
 //    model->setItem(0,1,new QStandardItem("01"));
 //    model->setItem(0, 3, new QStandardItem("0000"));
@@ -666,6 +863,7 @@ void MainWindow::initConnection(){
 //    connect(this,&MainWindow::click_minus,this,&MainWindow::_click_MinusButton);
 //    // DataButton connection
     connect(ui->DataButton,SIGNAL(clicked()),this,SLOT(_click_DataButton()));
+    connect(ui->logButton,&QPushButton::clicked,this,[&](){ui->textBrowser->clear();});
 }
 
 void MainWindow::_changeMode(QString msg){
@@ -713,6 +911,7 @@ bool MainWindow::constructFrame(int row_index){
     QString str;
     if(ui->tabWidget->currentIndex()==1){
         str.append(QString("%1").arg(transaction,4,16,QLatin1Char('0')));
+        // why use a mapping? why use transaction? just use row_index!!
         row_mp[transaction] = row_index;
         transaction+=1;
         str.append("0000"); // label: modbus
@@ -741,3 +940,73 @@ bool MainWindow::constructFrame(int row_index){
     }
     else{qDebug() << "Fail to send.";return false;}
 }
+bool MainWindow::constructFrame(int begin, int count){
+    // both transaction and start_address is begin
+    QString str;
+    if(ui->tabWidget->currentIndex()==1){
+//        str.append(QString("%1").arg(transaction,4,16,QLatin1Char('0')));
+//        // why use a mapping? why use transaction? just use row_index!!
+//        row_mp[transaction] = row_index;
+//        transaction+=1;
+        str.append(QString("%1").arg(begin,4,16,QLatin1Char('0')));
+        str.append("0000"); // label: modbus
+        str.append("0006"); // for single read/write
+    }
+//    //check input
+    bool res = isValidIndex(begin,1) && model->data(begin,1).toString().size()==2 && isValidIndex(begin,3) && model->data(begin,3).toString().size()==4;
+    if(!res){qDebug() << "Invalid index! Fail to send.";return false;}
+    str.append(model->data(begin,1).toString()); // address of slave
+    str.append(model->data(begin,2).toString()); // function code
+    str.append(model->data(begin,3).toString()); // start address
+    int funcCode = model->data(begin,2).toString().toInt();
+    if(funcCode>0&&funcCode<5){
+        str.append(QString("%1").arg(count,4,16,QLatin1Char('0')));
+    } // the number of coils for each query is <count>
+    else if(funcCode==5||funcCode==6){
+        res = isValidIndex(begin,9);
+        if(!res){qDebug() << "Invalid index! Fail to send.";return false;}
+        int val = model->data(begin,9).toString().toInt();
+        if(funcCode==5){
+            if(val==1){str.append("ff00");}
+            else if(val==0){str.append("0000");}
+            else{qDebug() << "Invalid coil value! please input '1' or '0'.";return false;}
+        }else{
+            if(model->data(begin,5).toString()=="浮点型"){
+                if(endianness==0){//little-endian
+
+                }else{// big-endian
+
+                }
+            }
+            else{
+            str.append(QString("%1").arg(val,4,16,QLatin1Char('0')));
+            }
+        }
+    }else{
+        if(!res){qDebug() << "Invalid function code! Fail to send.";return false;}
+    }
+//    str.append("0001"); // one for each query
+    //    str.append(model->item(index,4)->text()->toInt(16)); // data length
+    QByteArray frame = QByteArray::fromHex(str.toLatin1());
+    qDebug() << "发送报文" << frame;
+    res=0;
+    if(ui->tabWidget->currentIndex()==0){
+        append_CRC(frame);
+        res = serial->write(frame);
+        serial->flush();
+    }else if(ui->tabWidget->currentIndex()==1){
+        res = socket->write(frame);
+        socket->flush();
+    }
+    if(res){
+        qDebug() << "Successfully sent.";
+        ui->textBrowser->append("S:"+frame.toHex(' '));
+        return true;
+    }
+    else{
+        qDebug() << "Fail to send.";
+        ui->textBrowser->append("S: fail to send.");
+        return false;
+    }
+}
+

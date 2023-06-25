@@ -12,18 +12,18 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    dialog.cpp \
+    export_dialog.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     delegate.hpp \
-    dialog.h \
+    export_dialog.h \
     mainwindow.h \
     tmodel.hpp
 
 FORMS += \
-    dialog.ui \
+    export_dialog.ui \
     mainwindow.ui
 
 TRANSLATIONS += \

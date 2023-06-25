@@ -198,7 +198,7 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>超时(毫秒)：</string>
+                <string>查询周期(毫秒):</string>
                </property>
               </widget>
              </item>
@@ -333,6 +333,13 @@
             </property>
             <property name="flat">
              <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="logButton">
+            <property name="text">
+             <string>清空日志</string>
             </property>
            </widget>
           </item>

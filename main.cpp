@@ -19,16 +19,16 @@ int main(int argc, char *argv[])
     MainWindow w;
 
     //----
-    DeleteDelegate x;
+    DeleteDelegate dd;
     FunctionCodeDelegate fcd;
+    LengthDelegate ld;
     DataTypeDelegate dtd;
     TModel model;
-    qDebug() << &model;
     w.setModel(model);
-    w.setDelegate(0,x);
+    w.setDelegate(0,dd);
     w.setDelegate(2,fcd);
+    w.setDelegate(4,ld);
     w.setDelegate(5,dtd);
-    model.appendRow();
     //----
 
     w.show();

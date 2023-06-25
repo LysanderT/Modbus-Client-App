@@ -32,6 +32,7 @@ public:
     void setDelegate(int index,DataTypeDelegate&x);
     void setDelegate(int index,FunctionCodeDelegate&x);
     void setDelegate(int index,DeleteDelegate&x);
+    void setDelegate(int index,LengthDelegate&x);
     Ui::MainWindow *ui;
 public slots:
     void exportData(int);
@@ -70,7 +71,9 @@ private:
     void initTabelview();
     void initConnection();
     bool constructFrame(int);
-    QMap<int,int> row_mp;
+    bool constructFrame(int,int);
+    QMap<int,int> row_mp; // transaction -> row_index
+    int endianness = 0; // 0 represent little-endian, while 1 represent big-endian
 
 };
 #endif // MAINWINDOW_H

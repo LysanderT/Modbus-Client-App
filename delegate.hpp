@@ -81,7 +81,7 @@ public:
                           const QModelIndex &index) const
     {
         QComboBox *editor = new QComboBox(parent);
-        editor->addItems({"int","bool","double"});
+        editor->addItems({"整型","开关量","浮点型"});
         return editor;
     }
 
@@ -108,6 +108,42 @@ public:
     }
 };
 
+
+class LengthDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    LengthDelegate(QObject *parent = 0): QStyledItemDelegate(parent) { };
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                          const QModelIndex &index) const
+    {
+        QComboBox *editor = new QComboBox(parent);
+        editor->addItems({"8","16","32","64"});
+        return editor;
+    }
+
+    void setEditorData(QWidget *editor, const QModelIndex &index) const
+    {
+        QString text = index.model()->data(index, Qt::EditRole).toString();
+        QComboBox *comboBox = static_cast<QComboBox*>(editor);
+        int tindex = comboBox->findText(text);
+        comboBox->setCurrentIndex(tindex);
+    }
+
+    void setModelData(QWidget *editor, QAbstractItemModel *model,
+                      const QModelIndex &index) const
+    {
+        QComboBox *comboBox = static_cast<QComboBox*>(editor);
+        QString text = comboBox->currentText();
+        model->setData(index, text, Qt::EditRole);
+    }
+
+    void updateEditorGeometry(QWidget *editor,
+                              const QStyleOptionViewItem &option, const QModelIndex &index) const
+    {
+        editor->setGeometry(option.rect);
+    }
+};
 
 
 

@@ -24,8 +24,8 @@ Given that there is currently no open-source & cross-platform Modbus client soft
 - [x] 0x02
 - [x] 0x03
 - [x] 0x04
-- [ ] 0x05
-- [ ] 0x06
+- [x] 0x05
+- [x] 0x06
 - ...
 
 4.FEATURES
@@ -37,7 +37,8 @@ Given that there is currently no open-source & cross-platform Modbus client soft
     - [ ] xml
 - [x] 'real' progress bar
 - [x] automatically ignore invalid input under TCP mode
-- [x] catch the case when server actively terminate the connection
+- [x] catch the case when server actively terminate the TCP connection
+- [x] add clearable logs
 - [ ] ...
 
 5.BUILD
@@ -48,17 +49,17 @@ Given that there is currently no open-source & cross-platform Modbus client soft
 - [x] simulation - (utilized [unslave.exe](https://unserver.xyz/docs/unslave/#tcp-section) installed on a Windows PC)
 - [x] on real device
 
-7.TODO
+7.OPTIMIZATION
 - [x] decoupling using MVC design pattern (table/model/**delegate** in qt)
 - [x] modelize the code
 - [x] page the setup widget according to the mode
 - [x] minimize the cell width to make the window look better
-- [ ] merge the successive query to speed up
+- [x] merge the successive query to speed up
 - [ ] use multitread programming to speed up
-- [ ] add write mode
-- [ ] 16-bit register read/write (process data)
-- [ ] page the data according to different display order or [sorting](https://blog.51cto.com/quantfabric/1879125)
+- [x] 16/32/64-bit register read/write (process data)
+- [x] page the data according to different display order or sorting
 - [ ] add Demonstration(gif/video) to readme
+- [ ] add ascii mode
 - [ ] release (.dmg/.exe/.deb/.rpm) using CMake
 
 
@@ -104,7 +105,7 @@ You can also package the project into an executable file (which is easy using QT
 
 ## Demonstration
 
-should be a video or gif here
+should be a video or .gif here
 
 ## Developing Environment
 
@@ -117,11 +118,9 @@ should be a video or gif here
 
 1. fork the repo to your local repo
 2. write/change something in the local repo
-3. back to the original repo and raise the Pull Request
+3. back to the original repo and raise Pull Request
 
 👍 any contribution is welcome!
 
 
-[//]: 能否在click+/-button时知道自己的index？？？
-[//]: 可以在tableview发出信号clicked(index)的时候，用index.col()确定是否是-/+号，用index.row()来判断删/增哪一行
-[//]: 加号就放最下面吧，省力。。。。
+[//]: 多线程。可以记录map[transaction] = row_index，row_count由接收到的报文确定。然后每个线程处理一个就行

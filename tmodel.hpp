@@ -10,25 +10,90 @@
 #if _MSC_VER >= 1600
 #pragma execution_character_set("utf-8")
 #endif
+struct Row{
+    QString slave = "01";
+    QString function_code = "01";
+    QString address = "0000";
+    QString length = "16";
+    QString data_type = "整型";
+    double ratio = 1;
+    QString var = "";
+    QString unit = "";
+    QString cur_val = "";
+    QString real_val = "";
+};
+
+class DataSort
+{
+public:
+
+    int  mColumn;
+    Qt::SortOrder   mSortOrder;
+    DataSort(int column, Qt::SortOrder order)
+        : mColumn(column)
+        , mSortOrder(order)
+    {}
+    bool operator()(const Row v1, const Row v2)
+    {
+        int compare = 0;        // >0: gt; <0：lt
+        bool ret=false;
+        switch ( mColumn )
+        {
+        case 1:
+            compare = v1.slave.toInt()-v2.slave.toInt();
+            break;
+        case 2 :
+            compare = v1.function_code.toInt()-v2.function_code.toInt();
+            break;
+        case 3:
+            compare = v1.address.toInt() - v2.address.toInt();
+            break;
+        case 4:
+            compare = v1.length.toInt()-v2.length.toInt();
+            break;
+        case 5:
+            compare = v1.data_type.compare(v2.data_type);
+            break;
+        case 6:
+            compare = v1.ratio-v2.ratio;
+            break;
+        case 7:
+            compare = v1.var.compare(v2.var);
+            break;
+        case 8:
+            compare = v1.unit.compare(v2.unit);
+            break;
+        case 9:
+            compare = v1.cur_val.toInt()-v2.cur_val.toInt();
+            break;
+        case 10:
+            compare = v1.real_val.toInt()-v2.real_val.toInt();
+            break;
+        default :
+            break;
+        }
+
+        if(compare==0)      //相等必须返回flase,否则的话,对于一列相同的值进行降序,那么会一直返回true,从而死循环
+        {
+            return false;
+        }
+        else
+            ret = compare>0?false:true;
+
+        if ( mSortOrder == Qt::DescendingOrder )    //降序
+        {
+            ret =  !ret;
+        }
+        return ret;
+    }
+};
+
 
 class TModel : public QAbstractTableModel
 {
     Q_OBJECT
 
-    struct Row{
-        QString slave = "00";
-        QString function_code = "00";
-        QString address = "0000";
-        QString length = "1";
-        QString data_type = "int";
-        double ratio = 1;
-        QString var = "";
-        QString unit = "";
-        QString cur_val = "";
-        QString real_val = "";
-    };
-
-    QVector<QString> header = {"", "从站地址(0x)", "功能码", "地址(0x)", "长度(0d)", "数据类型", "变比", "变量", "单位", "当前值", "实际值"};
+    QVector<QString> header = {"", "从站(0x)", "功能码", "地址(0x)", "长度(bit)", "数据类型", "变比", "变量", "单位", "当前值(0d)", "实际值(0d)"};
 
 public:
     explicit TModel(QTableView* parent = Q_NULLPTR) : QAbstractTableModel(parent){}
@@ -90,6 +155,48 @@ public:
             break;
 
 
+        default:
+            return QVariant();
+            break;
+        }
+    }
+    QVariant data(int row, int col)const
+    {
+        if(row<0||col<0||row>=rowCount()||col>=columnCount()){return QVariant();}
+        switch (col) {
+        case 0:
+            return "-";
+            break;
+        case 1:
+            return rows[row].slave;
+            break;
+        case 2:
+            return rows[row].function_code;
+            break;
+        case 3:
+            return rows[row].address;
+            break;
+        case 4:
+            return rows[row].length;
+            break;
+        case 5:
+            return rows[row].data_type;
+            break;
+        case 6:
+            return rows[row].ratio;
+            break;
+        case 7:
+            return rows[row].var;
+            break;
+        case 8:
+            return rows[row].unit;
+            break;
+        case 9:
+            return rows[row].cur_val;
+            break;
+        case 10:
+            return rows[row].real_val;
+            break;
         default:
             return QVariant();
             break;
@@ -182,18 +289,18 @@ private:
 
                 QString str = rows[row+i-1].length;
                 rows[row+i].length = str;
-                int y = str.toInt();
-                str = QString::number(y,16);
-                y = str.toInt(nullptr,16);
+//                int y = str.toInt();
+//                str = QString::number(y,16);
+//                y = str.toInt(nullptr,16);
                 int x = rows[row+i-1].address.toInt(nullptr,16);
-                str =  QString("%1").arg(x+y,4,16,QLatin1Char('0'));
+//                str =  QString("%1").arg(x+y,4,16,QLatin1Char('0'));
+                str =  QString("%1").arg(x+1,4,16,QLatin1Char('0'));
                 rows[row+i].address = str;
 
                 rows[row+i].data_type = rows[row+i-1].data_type;
                 rows[row+i].ratio = rows[row+i-1].ratio;
                 rows[row+i].var = rows[row+i-1].var;
                 rows[row+i].unit = rows[row+i-1].unit;
-
             }
         }
 
@@ -231,6 +338,19 @@ public slots:
         if(index.row()>=rowCount()){return;}
         removeRow(index.row());
     }
+    void sort(int column, Qt::SortOrder order) override
+    {
+        beginResetModel();
+        DataSort cmp(column,order);
+        std::sort(rows.begin(), rows.end(),cmp);
+        endResetModel();
+    }
+//    void sort(){
+////        std::sort(rows.begin(), rows.end(), [](int a, int b)
+////                  {
+////                      return a > b;
+////                  });
+//    }
 private:
     QVector<Row> rows = {};
 };
