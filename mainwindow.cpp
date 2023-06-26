@@ -8,6 +8,7 @@
 #include <QProgressDialog>
 #include <QTextEdit>
 #include <QModelIndex>
+#include <endianness.h>
 
 // static look-up table (CRC-16)
 QVector<unsigned char> CRC_lo = {
@@ -219,7 +220,7 @@ void MainWindow::sendData(){
     if(model->rowCount()==0){return;}
     row_mp.clear(); // reset row_mp
     receive_index = 0;  // ***reset receive_index
-    QProgressDialog progress("进度","停止",0,model->rowCount()-1);
+    QProgressDialog progress("进度","停止",0,model->rowCount());
     progress.setWindowTitle("进度");
 //    progress.setWindowModality(Qt::WindowModal);
     progress.show();
@@ -278,6 +279,7 @@ void MainWindow::sendData(){
         QThread::msleep(delay);
         if(progress.wasCanceled()) break;
     }
+    progress.setValue(model->rowCount());
 //    for(int i=0; i<model->rowCount(); i++) {
 //        // process task
 //        bool res = constructFrame(i);
@@ -420,6 +422,12 @@ void MainWindow::_click_DataButton(){
     d->exec();
 }
 
+void MainWindow::_click_EndianButton(){
+    Endianness* d = new Endianness(this);
+    d->setAttribute(Qt::WA_DeleteOnClose);
+    d->exec();
+}
+
 void MainWindow::_receiveData(){
 //    QString x = "19";
 //    int y = x.toInt(nullptr,16);
@@ -512,21 +520,39 @@ void MainWindow::_receiveData(){
             int i=prefix_length-1+4;
             while(i<prefix_length-1+4+validbyte&&index<model->rowCount()){
                 int len_byte = ceil(model->data(index,4).toString().toInt()/8.0);
-                int res=0;
                 qDebug() << "len_byte" << len_byte;
-                while(len_byte>0&&i<prefix_length-1+4+validbyte){
-                    int curr =(receiveBuf.at(i)&0xff)*pow(32,len_byte-1);
-                    qDebug() << "curr:" << curr;
-                    res+=curr;
-                    i++;
-                    len_byte--;
-                }
-                model->setData(model->index(index,9),res);
-                qDebug() << "res" << res;
-                if(isValidIndex(index,6)){
-                    double ratio = model->data(index,6).toDouble();
-                    QString real_data = QString::number(ratio*res);
-                    model->setData(model->index(index,10),real_data);
+
+                if(model->data(index,5).toString()=="浮点型"){
+                    float result = 0;
+                    //    char* char_d = byte.data();
+                    char* p = (char*)&result;
+                    for(int index = 0; index < len_byte; index++)
+                    {
+                        *(p + index) = receiveBuf[i+len_byte - 1 - index];
+                    }
+                    i+=len_byte;
+                    model->setData(model->index(index,9),result);
+                    if(isValidIndex(index,6)){
+                        double ratio = model->data(index,6).toDouble();
+                        QString real_data = QString::number(ratio*result);
+                        model->setData(model->index(index,10),real_data);
+                    }
+                }else{
+                    int res=0;
+                    while(len_byte>0&&i<prefix_length-1+4+validbyte){
+                        int curr =(receiveBuf.at(i)&0xff)*pow(32,len_byte-1);
+                        qDebug() << "curr:" << curr;
+                        res+=curr;
+                        i++;
+                        len_byte--;
+                    }
+                    model->setData(model->index(index,9),res);
+                    qDebug() << "res" << res;
+                    if(isValidIndex(index,6)){
+                        double ratio = model->data(index,6).toDouble();
+                        QString real_data = QString::number(ratio*res);
+                        model->setData(model->index(index,10),real_data);
+                    }
                 }
                 index++;
             }
@@ -534,9 +560,15 @@ void MainWindow::_receiveData(){
         else if(func=="05" || func=="06"){
             num=6; // to determine the length to be deleted
             if(isValidIndex(index,6)){
-                int res = model->data(index,9).toString().toInt();
                 double ratio = model->data(index,6).toDouble();
-                QString real_data = QString::number(ratio*res);
+                QString real_data;
+                if(model->data(index,5).toString()=="浮点型"){
+                    double res = model->data(index,9).toString().toInt();
+                    real_data = QString::number(ratio*res);
+                }else{
+                    int res = model->data(index,9).toString().toInt();
+                    real_data = QString::number(ratio*res);
+                }
                 model->setData(model->index(index,10),real_data);
             }
         }else{
@@ -567,7 +599,7 @@ void MainWindow::_receiveData(){
         if(mode==0){receive_index++;} // for serial
         receiveBuf.remove(0,6+num);
         qDebug() << "------------------------------";
-    }
+
 //                QString y = x.sliced(0,2).toHex();
 //                int z=y.toInt(nullptr,16);
 //        if(mode==0){
@@ -584,6 +616,13 @@ void MainWindow::_receiveData(){
 //    int x=QString("0b").toInt(nullptr,16); // 16转10进制数字
 //    qDebug() << x;
 //    qDebug() << QString::number(x); //10进制数字转10进制字符串
+    }
+
+}
+
+void MainWindow::setEndianness(bool msg){
+    if(msg){endianness=1;}
+    else{endianness=0;}
 }
 
 void MainWindow::exportData(int msg)
@@ -754,6 +793,29 @@ void MainWindow::initSetup(){
 //    int x = 11;
 //    QString y = QString("%1").arg(x,4,16);
 //    qDebug() << y;
+//    QString str = "1122";
+//    QByteArray frame = QByteArray::fromHex(str.toLatin1());
+//    QByteArray f;
+//    f.append('\x01');
+//    f.append('\x02');
+//    f.append(QByteArray::fromHex(str.toLatin1()));
+
+//    float data = 12.1;
+//    QByteArray byte;
+//    char* data_char = (char*)&data;
+//    for(int index = 3; index >= 0; index--)
+//    {
+//        byte.append(data_char[index]);
+//    }
+
+//    float result = 0;
+//    int size = byte.size();
+////    char* char_d = byte.data();
+//    char* p = (char*)&result;
+//    for(int index = 0; index < size; index++)
+//    {
+//        *(p + index) = byte[size - 1 - index];
+//    }
 }
 
 void MainWindow::setModel(TModel &m){
@@ -863,6 +925,7 @@ void MainWindow::initConnection(){
 //    connect(this,&MainWindow::click_minus,this,&MainWindow::_click_MinusButton);
 //    // DataButton connection
     connect(ui->DataButton,SIGNAL(clicked()),this,SLOT(_click_DataButton()));
+    connect(ui->EndianButton,SIGNAL(clicked()),this,SLOT(_click_EndianButton()));
     connect(ui->logButton,&QPushButton::clicked,this,[&](){ui->textBrowser->clear();});
 }
 
@@ -907,6 +970,7 @@ void MainWindow::_hostError(){
     ui->tcp_button->setText(tr("TCP连接"));
     disconnect(socket, &QTcpSocket::readyRead, this, &MainWindow::_receiveData);
 }
+
 bool MainWindow::constructFrame(int row_index){
     QString str;
     if(ui->tabWidget->currentIndex()==1){
@@ -942,44 +1006,73 @@ bool MainWindow::constructFrame(int row_index){
 }
 bool MainWindow::constructFrame(int begin, int count){
     // both transaction and start_address is begin
-    QString str;
+    QByteArray frame;
+    //QString str;
     if(ui->tabWidget->currentIndex()==1){
 //        str.append(QString("%1").arg(transaction,4,16,QLatin1Char('0')));
 //        // why use a mapping? why use transaction? just use row_index!!
 //        row_mp[transaction] = row_index;
 //        transaction+=1;
-        str.append(QString("%1").arg(begin,4,16,QLatin1Char('0')));
-        str.append("0000"); // label: modbus
-        str.append("0006"); // for single read/write
+//        str.append(QString("%1").arg(begin,4,16,QLatin1Char('0')));
+//        str.append("0000"); // label: modbus
+//        str.append("0006"); // for single read/write
+        frame.append(QByteArray::fromHex(QString("%1").arg(begin,4,16,QLatin1Char('0')).toLatin1()));
+        frame.append('\x00');frame.append('\x00');
+        frame.append('\x00');frame.append('\x06');
     }
 //    //check input
     bool res = isValidIndex(begin,1) && model->data(begin,1).toString().size()==2 && isValidIndex(begin,3) && model->data(begin,3).toString().size()==4;
     if(!res){qDebug() << "Invalid index! Fail to send.";return false;}
-    str.append(model->data(begin,1).toString()); // address of slave
-    str.append(model->data(begin,2).toString()); // function code
-    str.append(model->data(begin,3).toString()); // start address
+//    str.append(model->data(begin,1).toString()); // address of slave
+//    str.append(model->data(begin,2).toString()); // function code
+//    str.append(model->data(begin,3).toString()); // start address
+    frame.append(QByteArray::fromHex(model->data(begin,1).toString().toLatin1()));
+//    if(model->data(begin,5).toString()=="浮点型"){
+//        frame.append('\x10');
+//    }else{
+//        frame.append(QByteArray::fromHex(model->data(begin,2).toString().toLatin1()));
+//    }
+    frame.append(QByteArray::fromHex(model->data(begin,2).toString().toLatin1()));
+    frame.append(QByteArray::fromHex(model->data(begin,3).toString().toLatin1()));
+//    if(model->data(begin,5).toString()=="浮点型"){
+//        frame.append('\00');
+//        frame.append('\02');
+//        frame.append('\04');
+//    }
     int funcCode = model->data(begin,2).toString().toInt();
     if(funcCode>0&&funcCode<5){
-        str.append(QString("%1").arg(count,4,16,QLatin1Char('0')));
+        frame.append(QByteArray::fromHex(QString("%1").arg(count,4,16,QLatin1Char('0')).toLatin1()));
+        //str.append(QString("%1").arg(count,4,16,QLatin1Char('0')));
     } // the number of coils for each query is <count>
     else if(funcCode==5||funcCode==6){
         res = isValidIndex(begin,9);
         if(!res){qDebug() << "Invalid index! Fail to send.";return false;}
         int val = model->data(begin,9).toString().toInt();
         if(funcCode==5){
-            if(val==1){str.append("ff00");}
-            else if(val==0){str.append("0000");}
+//            if(val==1){str.append("ff00");}
+//            else if(val==0){str.append("0000");}
+            if(val==1){frame.append('\xff');frame.append('\x00');}
+            else if(val==0){frame.append('\x00');frame.append('\x00');}
             else{qDebug() << "Invalid coil value! please input '1' or '0'.";return false;}
         }else{
             if(model->data(begin,5).toString()=="浮点型"){
+                float f_val = model->data(begin,9).toString().toFloat(&res);
+                if(!res){qDebug() << "Invalid value! please input a float value";return false;}
+                char * char_val = (char*) &f_val;
                 if(endianness==0){//little-endian
-
+                    for(int index = 0; index < 4; index++)
+                    {
+                        frame.append(char_val[index]);
+                    }
                 }else{// big-endian
-
+                    for(int index = 3; index >= 0; index--)
+                    {
+                        frame.append(char_val[index]);
+                    }
                 }
-            }
-            else{
-            str.append(QString("%1").arg(val,4,16,QLatin1Char('0')));
+            }else{
+                frame.append(QByteArray::fromHex(QString("%1").arg(val,4,16,QLatin1Char('0')).toLatin1()));
+//            str.append(QString("%1").arg(val,4,16,QLatin1Char('0')));
             }
         }
     }else{
@@ -987,7 +1080,7 @@ bool MainWindow::constructFrame(int begin, int count){
     }
 //    str.append("0001"); // one for each query
     //    str.append(model->item(index,4)->text()->toInt(16)); // data length
-    QByteArray frame = QByteArray::fromHex(str.toLatin1());
+    //QByteArray frame = QByteArray::fromHex(str.toLatin1());
     qDebug() << "发送报文" << frame;
     res=0;
     if(ui->tabWidget->currentIndex()==0){

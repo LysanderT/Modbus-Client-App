@@ -38,31 +38,40 @@ Given that there is currently no open-source & cross-platform Modbus client soft
 - [x] 'real' progress bar
 - [x] automatically ignore invalid input under TCP mode
 - [x] catch the case when server actively terminate the TCP connection
-- [x] add clearable logs
+- [x] add clearable send/read logs
+- [x] interactively sorting tableview
 - [ ] ...
 
 5.BUILD
 - [x] qmake
 - [x] cmake
 
-6.TEST
+6.SUPPORTED DATA TYPE
+- [x] int
+- [x] bool
+- [x] float32
+
+7.TEST
 - [x] simulation - (utilized [unslave.exe](https://unserver.xyz/docs/unslave/#tcp-section) installed on a Windows PC)
 - [x] on real device
 
-7.OPTIMIZATION
+8.OPTIMIZATION
 - [x] decoupling using MVC design pattern (table/model/**delegate** in qt)
 - [x] modelize the code
 - [x] page the setup widget according to the mode
 - [x] minimize the cell width to make the window look better
 - [x] merge the successive query to speed up
+- [ ] use bitwise/bytewise operation (instead of string) to speed up ([ex](https://www.cnblogs.com/sherlock-lin/articles/11708281.html))
 - [ ] use multitread programming to speed up
+
+9.TODO
 - [x] 16/32/64-bit register read/write (process data)
 - [x] page the data according to different display order or sorting
+- [ ] process float32
 - [ ] add Demonstration(gif/video) to readme
 - [ ] add ascii mode
+- [ ] add icon
 - [ ] release (.dmg/.exe/.deb/.rpm) using CMake
-
-
 
 ## Perequisites
 
@@ -103,6 +112,25 @@ void run_with_cmake(){
 
 You can also package the project into an executable file (which is easy using QT Creator) and run it directly.
 
+### Float32
+
+if you want to use float32 data type, you should specify the endianness of the master and slave (little-edian by default).
+
+if you don't know the endianness of your machine, the following code may help
+
+```
+bool IsBigEndian()
+{
+　　int a = 0x1234;
+　　char b = *(char *)&a;
+　　if( b == 0x12)
+　　{
+　　　　return true;
+　　}
+　　return false;
+}
+```
+
 ## Demonstration
 
 should be a video or .gif here
@@ -121,6 +149,3 @@ should be a video or .gif here
 3. back to the original repo and raise Pull Request
 
 👍 any contribution is welcome!
-
-
-[//]: 多线程。可以记录map[transaction] = row_index，row_count由接收到的报文确定。然后每个线程处理一个就行

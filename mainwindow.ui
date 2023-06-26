@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>712</width>
+    <width>701</width>
     <height>460</height>
    </rect>
   </property>
@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Modbus Client</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -287,7 +287,20 @@
         </widget>
        </item>
        <item row="2" column="0" colspan="2">
-        <widget class="QTextBrowser" name="textBrowser"/>
+        <widget class="QTextBrowser" name="textBrowser">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>270</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
        </item>
        <item row="2" column="3">
         <widget class="QGroupBox" name="groupBox_3">
@@ -344,6 +357,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="EndianButton">
+            <property name="text">
+             <string>存储模式</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="plusButton">
             <property name="text">
              <string>增加条目</string>
@@ -366,9 +386,12 @@
       </property>
       <property name="minimumSize">
        <size>
-        <width>0</width>
+        <width>200</width>
         <height>150</height>
        </size>
+      </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::NoContextMenu</enum>
       </property>
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAsNeeded</enum>
@@ -388,7 +411,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>712</width>
+     <width>701</width>
      <height>24</height>
     </rect>
    </property>

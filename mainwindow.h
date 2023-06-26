@@ -34,8 +34,10 @@ public:
     void setDelegate(int index,DeleteDelegate&x);
     void setDelegate(int index,LengthDelegate&x);
     Ui::MainWindow *ui;
+
 public slots:
     void exportData(int);
+    void setEndianness(bool);
 
 private slots:
     // open the selected/input port
@@ -49,6 +51,8 @@ private slots:
     void _click_MinusButton(int);
     // export data from the table
     void _click_DataButton();
+    // select the endianness
+    void _click_EndianButton();
     // process the data send back from slave
     void _receiveData();
     // response to the mode changing
@@ -73,7 +77,6 @@ private:
     bool constructFrame(int);
     bool constructFrame(int,int);
     QMap<int,int> row_mp; // transaction -> row_index
-    int endianness = 0; // 0 represent little-endian, while 1 represent big-endian
-
+    bool endianness = 0; // 0 represent little-endian, while 1 represent big-endian
 };
 #endif // MAINWINDOW_H
