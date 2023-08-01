@@ -93,7 +93,7 @@ class TModel : public QAbstractTableModel
 {
     Q_OBJECT
 
-    QVector<QString> header = {"", "从站(0x)", "功能码", "地址(0x)", "长度(bit)", "数据类型", "变比", "变量", "单位", "当前值(0d)", "实际值(0d)"};
+    QVector<QString> header = {"", "（0x）从站", "功能码", "（0x）地址", "（bit）长度", "数据类型", "变比", "变量", "单位", "（0d）当前值", "（0d）实际值"};
 
 public:
     explicit TModel(QTableView* parent = Q_NULLPTR) : QAbstractTableModel(parent){}

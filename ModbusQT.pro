@@ -4,29 +4,30 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 QT += serialport
 QT += network
+QT += xml
 
 CONFIG += c++17
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
-#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
     endianness.cpp \
-    export_dialog.cpp \
+    dialog.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     delegate.hpp \
     endianness.h \
-    export_dialog.h \
+    dialog.h \
     mainwindow.h \
     tmodel.hpp
 
 FORMS += \
     endianness.ui \
-    export_dialog.ui \
+    dialog.ui \
     mainwindow.ui
 
 TRANSLATIONS += \

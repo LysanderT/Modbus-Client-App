@@ -50,7 +50,7 @@ private slots:
     // remove the specified row
     void _click_MinusButton(int);
     // export data from the table
-    void _click_DataButton();
+    void _click_ExportButton();
     // select the endianness
     void _click_EndianButton();
     // process the data send back from slave
@@ -77,6 +77,7 @@ private:
     bool constructFrame(int);
     bool constructFrame(int,int);
     QMap<int,int> row_mp; // transaction -> row_index
-    bool endianness = 0; // 0 represent little-endian, while 1 represent big-endian
+    bool slave_endianness = 0; // 0 represent little-endian, while 1 represent big-endian
+    bool master_endianness = 0; // 0 represent little-endian, while 1 represent big-endian
 };
 #endif // MAINWINDOW_H

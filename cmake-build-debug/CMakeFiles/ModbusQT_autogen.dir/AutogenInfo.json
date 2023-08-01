@@ -1,0 +1,181 @@
+{
+	"BUILD_DIR" : "/Users/lysander/Documents/ModbusQT/cmake-build-debug/ModbusQT_autogen",
+	"CMAKE_BINARY_DIR" : "/Users/lysander/Documents/ModbusQT/cmake-build-debug",
+	"CMAKE_CURRENT_BINARY_DIR" : "/Users/lysander/Documents/ModbusQT/cmake-build-debug",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/Users/lysander/Documents/ModbusQT",
+	"CMAKE_EXECUTABLE" : "/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake",
+	"CMAKE_LIST_FILES" : 
+	[
+		"/Users/lysander/Documents/ModbusQT/CMakeLists.txt",
+		"/Users/lysander/Documents/ModbusQT/cmake-build-debug/CMakeFiles/3.25.2/CMakeSystem.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeSystemSpecificInitialize.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Platform/Darwin-Initialize.cmake",
+		"/Users/lysander/Documents/ModbusQT/cmake-build-debug/CMakeFiles/3.25.2/CMakeCXXCompiler.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeSystemSpecificInformation.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeGenericSystem.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeInitializeConfigs.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Platform/Darwin.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Platform/UnixPaths.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeCXXInformation.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeLanguageInformation.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Compiler/AppleClang-CXX.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Compiler/Clang.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Compiler/CMakeCommonCompilerMacros.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Compiler/GNU.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Compiler/CMakeCommonCompilerMacros.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Platform/Apple-AppleClang-CXX.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Platform/Apple-Clang-CXX.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/Platform/Apple-Clang.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeCommonLanguageInclude.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5/Qt5ConfigVersion.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5/Qt5Config.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5/Qt5ConfigVersion.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5/Qt5Config.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5/Qt5ModuleLocation.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Core/Qt5CoreConfigVersion.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Core/Qt5CoreConfig.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Core/Qt5CoreConfigExtras.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Core/Qt5CoreConfigExtrasMkspecDir.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Core/Qt5CoreMacros.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeParseArguments.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5GuiConfigVersion.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5GuiConfig.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QCocoaIntegrationPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QGifPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QICNSPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QICOPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QJpegPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QMacHeifPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QMacJp2Plugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QMinimalIntegrationPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QOffscreenIntegrationPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QPdfPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QSvgIconPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QSvgPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QTgaPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QTiffPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QTuioTouchPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QVirtualKeyboardPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QWbmpPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QWebGLIntegrationPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QWebpPlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5Gui_QXdgDesktopPortalThemePlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Gui/Qt5GuiConfigExtras.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Network/Qt5NetworkConfigVersion.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Network/Qt5NetworkConfig.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Network/Qt5Network_QGenericEnginePlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5SerialPort/Qt5SerialPortConfigVersion.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5SerialPort/Qt5SerialPortConfig.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Widgets/Qt5WidgetsConfigVersion.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Widgets/Qt5WidgetsConfig.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Widgets/Qt5Widgets_QMacStylePlugin.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Widgets/Qt5WidgetsConfigExtras.cmake",
+		"/opt/homebrew/Caskroom/miniconda/base/lib/cmake/Qt5Widgets/Qt5WidgetsMacros.cmake",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeParseArguments.cmake"
+	],
+	"CMAKE_SOURCE_DIR" : "/Users/lysander/Documents/ModbusQT",
+	"DEP_FILE" : "/Users/lysander/Documents/ModbusQT/cmake-build-debug/ModbusQT_autogen/deps",
+	"DEP_FILE_RULE_NAME" : "ModbusQT_autogen/timestamp",
+	"HEADERS" : 
+	[
+		[
+			"/Users/lysander/Documents/ModbusQT/delegate.hpp",
+			"MU",
+			"EWIEGA46WW/moc_delegate.cpp",
+			null
+		],
+		[
+			"/Users/lysander/Documents/ModbusQT/dialog.h",
+			"MU",
+			"EWIEGA46WW/moc_dialog.cpp",
+			null
+		],
+		[
+			"/Users/lysander/Documents/ModbusQT/endianness.h",
+			"MU",
+			"EWIEGA46WW/moc_endianness.cpp",
+			null
+		],
+		[
+			"/Users/lysander/Documents/ModbusQT/mainwindow.h",
+			"MU",
+			"EWIEGA46WW/moc_mainwindow.cpp",
+			null
+		],
+		[
+			"/Users/lysander/Documents/ModbusQT/tmodel.hpp",
+			"MU",
+			"EWIEGA46WW/moc_tmodel.cpp",
+			null
+		]
+	],
+	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
+	"INCLUDE_DIR" : "/Users/lysander/Documents/ModbusQT/cmake-build-debug/ModbusQT_autogen/include",
+	"MOC_COMPILATION_FILE" : "/Users/lysander/Documents/ModbusQT/cmake-build-debug/ModbusQT_autogen/mocs_compilation.cpp",
+	"MOC_DEFINITIONS" : 
+	[
+		"QT_CORE_LIB",
+		"QT_GUI_LIB",
+		"QT_NETWORK_LIB",
+		"QT_SERIALPORT_LIB",
+		"QT_WIDGETS_LIB"
+	],
+	"MOC_DEPEND_FILTERS" : 
+	[
+		[
+			"Q_PLUGIN_METADATA",
+			"[\n][ \t]*Q_PLUGIN_METADATA[ \t]*\\([^\\)]*FILE[ \t]*\"([^\"]+)\""
+		]
+	],
+	"MOC_INCLUDES" : 
+	[
+		"/Users/lysander/Documents/ModbusQT/cmake-build-debug",
+		"/Users/lysander/Documents/ModbusQT",
+		"/opt/homebrew/Caskroom/miniconda/base/include/qt",
+		"/opt/homebrew/Caskroom/miniconda/base/include/qt/QtCore",
+		"/opt/homebrew/Caskroom/miniconda/base/mkspecs/macx-clang",
+		"/opt/homebrew/Caskroom/miniconda/base/include/qt/QtGui",
+		"/Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/System/Library/Frameworks/OpenGL.framework/Headers",
+		"/opt/homebrew/Caskroom/miniconda/base/include/qt/QtWidgets",
+		"/opt/homebrew/Caskroom/miniconda/base/include/qt/QtNetwork",
+		"/opt/homebrew/Caskroom/miniconda/base/include/qt/QtSerialPort",
+		"/Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include/c++/v1",
+		"/Library/Developer/CommandLineTools/usr/lib/clang/14.0.0/include",
+		"/Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/usr/include",
+		"/Library/Developer/CommandLineTools/usr/include"
+	],
+	"MOC_MACRO_NAMES" : [ "Q_OBJECT", "Q_GADGET", "Q_NAMESPACE", "Q_NAMESPACE_EXPORT" ],
+	"MOC_OPTIONS" : [],
+	"MOC_PATH_PREFIX" : false,
+	"MOC_PREDEFS_CMD" : 
+	[
+		"/Library/Developer/CommandLineTools/usr/bin/c++",
+		"-dM",
+		"-E",
+		"-c",
+		"/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.25/Modules/CMakeCXXCompilerABI.cpp"
+	],
+	"MOC_PREDEFS_FILE" : "/Users/lysander/Documents/ModbusQT/cmake-build-debug/ModbusQT_autogen/moc_predefs.h",
+	"MOC_RELAXED_MODE" : false,
+	"MOC_SKIP" : [],
+	"MULTI_CONFIG" : false,
+	"PARALLEL" : 8,
+	"PARSE_CACHE_FILE" : "/Users/lysander/Documents/ModbusQT/cmake-build-debug/CMakeFiles/ModbusQT_autogen.dir/ParseCache.txt",
+	"QT_MOC_EXECUTABLE" : "/opt/homebrew/Caskroom/miniconda/base/bin/moc",
+	"QT_UIC_EXECUTABLE" : "/opt/homebrew/Caskroom/miniconda/base/bin/uic",
+	"QT_VERSION_MAJOR" : 5,
+	"QT_VERSION_MINOR" : 15,
+	"SETTINGS_FILE" : "/Users/lysander/Documents/ModbusQT/cmake-build-debug/CMakeFiles/ModbusQT_autogen.dir/AutogenUsed.txt",
+	"SOURCES" : 
+	[
+		[ "/Users/lysander/Documents/ModbusQT/dialog.cpp", "MU", null ],
+		[ "/Users/lysander/Documents/ModbusQT/endianness.cpp", "MU", null ],
+		[ "/Users/lysander/Documents/ModbusQT/main.cpp", "MU", null ],
+		[ "/Users/lysander/Documents/ModbusQT/mainwindow.cpp", "MU", null ]
+	],
+	"UIC_OPTIONS" : [],
+	"UIC_SEARCH_PATHS" : [],
+	"UIC_SKIP" : [],
+	"UIC_UI_FILES" : [],
+	"VERBOSITY" : 0
+}

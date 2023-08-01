@@ -1,0 +1,9 @@
+# ninja log v5
+697	2121	1688000482755937147	CMakeFiles/ModbusQT.dir/endianness.cpp.o	c053b9f5c8d24624
+0	696	1688000481332563021	ModbusQT_autogen/mocs_compilation.cpp	9a72f0d0d9d16fcb
+0	696	1688000481332563021	/Users/lysander/Documents/ModbusQT/cmake-build-debug/ModbusQT_autogen/timestamp	9a72f0d0d9d16fcb
+0	696	1688000481332563021	ModbusQT_autogen/timestamp	9a72f0d0d9d16fcb
+698	2125	1688000482759142834	CMakeFiles/ModbusQT.dir/dialog.cpp.o	b935119216552c0c
+697	2815	1688000483452065156	CMakeFiles/ModbusQT.dir/ModbusQT_autogen/mocs_compilation.cpp.o	180e87a5339a62a5
+0	696	1688000481332563021	/Users/lysander/Documents/ModbusQT/cmake-build-debug/ModbusQT_autogen/mocs_compilation.cpp	9a72f0d0d9d16fcb
+697	2777	1688000483417927593	CMakeFiles/ModbusQT.dir/main.cpp.o	7277673828ad3649

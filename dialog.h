@@ -10,7 +10,7 @@ class Dialog;
 class Dialog : public QDialog
 {
     Q_OBJECT
-signals: void which_to_click(int); // 0 for csv, 1 for excel, 3 for txt
+signals: void which_to_click(int); // 0 for csv, 1 for excel, 3 for xml
 public:
     explicit Dialog(QWidget *parent = nullptr);
     ~Dialog();

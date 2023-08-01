@@ -1,0 +1,5 @@
+/Users/lysander/Documents/ModbusQT/cmake-build-debug/CMakeFiles/ModbusQT.dir
+/Users/lysander/Documents/ModbusQT/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/lysander/Documents/ModbusQT/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/lysander/Documents/ModbusQT/cmake-build-debug/CMakeFiles/ModbusQT_autogen_timestamp_deps.dir
+/Users/lysander/Documents/ModbusQT/cmake-build-debug/CMakeFiles/ModbusQT_autogen.dir

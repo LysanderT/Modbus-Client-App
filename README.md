@@ -1,8 +1,8 @@
-# Modbus Client App
+# Modbus Client
 --- 
-Modbus Client App is a robust and cross-platform implementation for modbus master to test modbus server.
+Modbus Client is a robust, cross-platform and elegant implementation for modbus master to test modbus server.
 
-Given that there is currently no open-source & cross-platform Modbus client software with GUI available online (either not free or can only be running on Windows), I implemented one with minimal dependencies (Qt library).
+Given that there is currently no open-source & cross-platform Modbus client software with GUI available online (either not free or <.exe> type that can only be running on Windows), I implemented one with minimal dependencies (Qt library).
 
 ## Developing Process
 
@@ -16,7 +16,6 @@ Given that there is currently no open-source & cross-platform Modbus client soft
 2.MODE
 
 - [x] RTU-serial
-- [ ] ASCII-serial
 - [x] TCP
 
 3.SUPPORTED FUNCTION CODE
@@ -34,12 +33,13 @@ Given that there is currently no open-source & cross-platform Modbus client soft
     - [x] csv
     - [x] excel
     - [x] txt
-    - [ ] xml
+    - [x] xml
 - [x] 'real' progress bar
-- [x] automatically ignore invalid input under TCP mode
 - [x] catch the case when server actively terminate the TCP connection
-- [x] add clearable send/read logs
+- [x] clearable send/read logs
 - [x] interactively sorting tableview
+- [x] Automatically detects how the client data is stored (little/big endianness)
+- [x] Choose how the server stores float32 data (little/big endianness)
 - [ ] ...
 
 5.BUILD
@@ -56,22 +56,20 @@ Given that there is currently no open-source & cross-platform Modbus client soft
 - [x] on real device
 
 8.OPTIMIZATION
-- [x] decoupling using MVC design pattern (table/model/**delegate** in qt)
-- [x] modelize the code
-- [x] page the setup widget according to the mode
-- [x] minimize the cell width to make the window look better
-- [x] merge the successive query to speed up
-- [ ] use bitwise/bytewise operation (instead of string) to speed up ([ex](https://www.cnblogs.com/sherlock-lin/articles/11708281.html))
-- [ ] use multitread programming to speed up
+- [x] Decoupling using MVC design pattern (table/model/**delegate** in qt)
+- [x] Modelize the code
+- [x] Page the setup widget according to the mode
+- [x] Minimize the cell width to make the window look better
+- [x] Merge multiple successive single reading query into one
+- [x] Use the Dom Tree to generate xml file
 
 9.TODO
 - [x] 16/32/64-bit register read/write (process data)
 - [x] page the data according to different display order or sorting
-- [ ] process float32
+- [x] export table data as .xml file
+- [x] process float32
+- [x] identify the os/compiler using macro to make it compatible
 - [ ] add Demonstration(gif/video) to readme
-- [ ] add ascii mode
-- [ ] add icon
-- [ ] release (.dmg/.exe/.deb/.rpm) using CMake
 
 ## Perequisites
 
@@ -114,9 +112,9 @@ You can also package the project into an executable file (which is easy using QT
 
 ### Float32
 
-if you want to use float32 data type, you should specify the endianness of the master and slave (little-edian by default).
+if you want to use float32 data type, you should specify the endianness of the slave (little-edian by default, the endianness of the master if automatically specified).
 
-if you don't know the endianness of your machine, the following code may help
+if you don't know the endianness of the slave, the following code may help.
 
 ```
 bool IsBigEndian()
@@ -130,6 +128,8 @@ bool IsBigEndian()
 　　return false;
 }
 ```
+
+to use this data type, the register should be at least 32 bit.
 
 ## Demonstration
 

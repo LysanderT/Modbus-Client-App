@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "export_dialog.h"
+#include "dialog.h"
 #include <iostream>
 #include <QFileDialog>
 #include <QDebug>
@@ -9,9 +9,11 @@
 #include <QTextEdit>
 #include <QModelIndex>
 #include <endianness.h>
+#include <QtXml>
+#include <QDomDocument>
 
 // static look-up table (CRC-16)
-QVector<unsigned char> CRC_lo = {
+static QVector<unsigned char> CRC_lo = {
     0x00, 0xC0, 0xC1, 0x01, 0xC3, 0x03, 0x02, 0xC2, 0xC6, 0x06, 0x07, 0xC7, 0x05, 0xC5, 0xC4,
     0x04, 0xCC, 0x0C, 0x0D, 0xCD, 0x0F, 0xCF, 0xCE, 0x0E, 0x0A, 0xCA, 0xCB, 0x0B, 0xC9, 0x09,
     0x08, 0xC8, 0xD8, 0x18, 0x19, 0xD9, 0x1B, 0xDB, 0xDA, 0x1A, 0x1E, 0xDE, 0xDF, 0x1F, 0xDD,
@@ -31,7 +33,7 @@ QVector<unsigned char> CRC_lo = {
     0x44, 0x84, 0x85, 0x45, 0x87, 0x47, 0x46, 0x86, 0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80,
     0x40
 };
-QVector<unsigned char> CRC_hi = {
+static QVector<unsigned char> CRC_hi = {
     0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
     0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0,
     0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01,
@@ -416,7 +418,7 @@ void MainWindow::_click_MinusButton(int msg){
     qDebug() << "remove line:" << msg+1;
 }
 
-void MainWindow::_click_DataButton(){
+void MainWindow::_click_ExportButton(){
     Dialog* d = new Dialog(this);
     d->setAttribute(Qt::WA_DeleteOnClose);
     d->exec();
@@ -526,9 +528,16 @@ void MainWindow::_receiveData(){
                     float result = 0;
                     //    char* char_d = byte.data();
                     char* p = (char*)&result;
-                    for(int index = 0; index < len_byte; index++)
-                    {
-                        *(p + index) = receiveBuf[i+len_byte - 1 - index];
+                    if(master_endianness^slave_endianness){
+                        for(int index = 0; index < len_byte; index++)
+                        {
+                            *(p + index) = receiveBuf[i+len_byte - 1 - index];
+                        }
+                    }else{
+                        for(int index = 0; index < len_byte; index++)
+                        {
+                            *(p + index) = receiveBuf[i+index];
+                        }
                     }
                     i+=len_byte;
                     model->setData(model->index(index,9),result);
@@ -621,50 +630,162 @@ void MainWindow::_receiveData(){
 }
 
 void MainWindow::setEndianness(bool msg){
-    if(msg){endianness=1;}
-    else{endianness=0;}
+    if(msg){slave_endianness=1;}
+    else{slave_endianness=0;}
 }
 
 void MainWindow::exportData(int msg)
 {
     QString name;
     QString postfix;
+    QString split = "";
     switch (msg) {
     case 0:
         name = "CSV";
         postfix = "(*.csv)";
+        split = ",";
         break;
     case 1:
         name = "EXCEL";
         postfix = "(*.xls)";
+        split = "\t";
         break;
     case 2:
-        name = "TXT";
-        postfix = "(*.txt)";
+        name = "XML";
+        postfix = "(*.xml)";
         break;
     default:
         qDebug() << "msg type from exprtData is invalid!";
+        return;
     }
     QString filepath = QFileDialog::getSaveFileName(this, tr("Save as..."),
                                                   QString(), name+" files "+postfix);
-    if (filepath != "")
-    {
-        int row = ui->tableView->model()->rowCount();
-        int col = ui->tableView->model()->columnCount();
+    if(filepath==""){QMessageBox::critical(this, "错误","数据导出为"+name+"失败");}
+    if(name=="XML"){
+        QDomDocument doc;
+
+        QDomProcessingInstruction instruction;
+        instruction = doc.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"UTF-8\"");
+        doc.appendChild(instruction);
+
+        QDomElement root = doc.createElement("ModbusInfo");
+        doc.appendChild(root);
+// =============================config==============================
+        QDomElement config = doc.createElement("Configuration");
+        root.appendChild(config);
+
+        QDomElement mode = doc.createElement("Mode");
+        QDomElement config1 = doc.createElement("Config1");
+        QDomElement config2 = doc.createElement("Config2");
+        QDomElement config3 = doc.createElement("Config3");
+        config.appendChild(mode);
+        config.appendChild(config1);
+        config.appendChild(config2);
+        config.appendChild(config3);
+
+        QString str0,str1,str2,str3;
+        QDomText text0,text1,text2,text3;
+        if(ui->tabWidget->currentIndex()==0){
+            str0 = "RTU";
+            str1 = ui->comboBox_port->currentText();
+            str2 = ui->comboBox_parity->currentText();
+            str3 = ui->comboBox_baudRate->currentText();
+        }else{
+            str0 = "TCP";
+            str1 = ui->lineEdit_delay->text();
+            str2 = ui->lineEdit_address->text();
+            str3 = ui->lineEdit_port->text();
+        }
+        text0 = doc.createTextNode(str0);
+        text1 = doc.createTextNode(str1);
+        text2 = doc.createTextNode(str2);
+        text3 = doc.createTextNode(str3);
+        mode.appendChild(text0);
+        config1.appendChild(text1);
+        config2.appendChild(text2);
+        config3.appendChild(text3);
+// =============================table==============================
+        QDomElement data = doc.createElement("Data");
+        root.appendChild(data);
+        QDomText text4,text5,text6,text7;
+        for(int i=0; i<model->rowCount();i++){
+            QDomElement row = doc.createElement("Row"+QString::number(i));
+            QDomElement ele1 = doc.createElement("Slave");
+            QDomElement ele2 = doc.createElement("FunctionCode");
+            QDomElement ele3 = doc.createElement("Address");
+            QDomElement ele4 = doc.createElement("Width");
+            QDomElement ele5 = doc.createElement("Type");
+            QDomElement ele6 = doc.createElement("Ratio");
+            QDomElement ele7 = doc.createElement("Variable");
+            QDomElement ele8 = doc.createElement("Unit");
+            QDomElement ele9 = doc.createElement("Value");
+            QDomElement ele10 = doc.createElement("RealValue");
+            text1 = doc.createTextNode(model->data(i,1).toString());
+            text2 = doc.createTextNode(model->data(i,2).toString());
+            text3 = doc.createTextNode(model->data(i,3).toString());
+            text4 = doc.createTextNode(model->data(i,4).toString());
+            text5 = doc.createTextNode(model->data(i,5).toString());
+            text6 = doc.createTextNode(model->data(i,6).toString());
+            text7 = doc.createTextNode(model->data(i,7).toString());
+            QDomText text8 = doc.createTextNode(model->data(i,8).toString());
+            QDomText text9 = doc.createTextNode(model->data(i,9).toString());
+            QDomText text10 = doc.createTextNode(model->data(i,10).toString());
+
+            data.appendChild(row);
+
+            row.appendChild(ele1);
+            row.appendChild(ele2);
+            row.appendChild(ele3);
+            row.appendChild(ele4);
+            row.appendChild(ele5);
+            row.appendChild(ele6);
+            row.appendChild(ele7);
+            row.appendChild(ele8);
+            row.appendChild(ele9);
+            row.appendChild(ele10);
+
+            ele1.appendChild(text1);
+            ele2.appendChild(text2);
+            ele3.appendChild(text3);
+            ele4.appendChild(text4);
+            ele5.appendChild(text5);
+            ele6.appendChild(text6);
+            ele7.appendChild(text7);
+            ele8.appendChild(text8);
+            ele9.appendChild(text9);
+            ele10.appendChild(text10);
+        }
+// =============================write==============================
+        QFile file(filepath);
+        if (file.open(QFile::WriteOnly | QIODevice::Text))
+        {
+            QTextStream stream(&file);
+            doc.save(stream, 4);		// indent = 4
+            file.close();
+            QMessageBox::information(this, "提示","数据成功导出为"+name);
+            qDebug() << "数据导出成功";
+        }else{
+            QMessageBox::critical(this, "错误","数据导出为"+name+"失败");
+            qDebug() << "数据导出失败";
+        }
+// ================================================================
+    }else{
+        int row = model->rowCount();
+        int col = model->columnCount();
         QList<QString> list;
         //添加列标题
         QString HeaderRow;
         for (int i = 1; i < col; i++)
         {
-            HeaderRow.append(ui->tableView->model()->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() + "\t");
+            HeaderRow.append(model->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() + split);
         }
         list.push_back(HeaderRow);
         for (int i = 0; i < row; i++)
         {
             QString rowStr = "";
             for (int j = 1; j < col; j++){
-                QModelIndex index = ui->tableView->model()->index(i, j);
-                rowStr += ui->tableView->model()->data(index).toString() + "\t";
+                QModelIndex index = model->index(i, j);
+                rowStr += model->data(index).toString() + split;
             }
             list.push_back(rowStr);
         }
@@ -816,6 +937,18 @@ void MainWindow::initSetup(){
 //    {
 //        *(p + index) = byte[size - 1 - index];
 //    }
+
+
+    // check and set the endianness of the modbus master
+//    int a = 0x1234;
+//    char b = *(char *)&a;
+#if Q_BYTE_ORDER == LITTLE_ENDIAN
+    master_endianness = 0;
+#else
+    master_endianness = 1;
+#endif
+//    if( b == 0x12){master_endianness = 1;}
+//    else master_endianness = 0;
 }
 
 void MainWindow::setModel(TModel &m){
@@ -823,12 +956,15 @@ void MainWindow::setModel(TModel &m){
     model = &m;
     qDebug() << &*model;
     ui->tableView->setColumnWidth(0,22);
-    ui->tableView->setColumnWidth(1,60);
     for(int i=1;i<m.columnCount()-2;i++){
         ui->tableView->setColumnWidth(i,60);
     }
-    ui->tableView->setColumnWidth(m.columnCount()-2,65);
-    ui->tableView->setColumnWidth(m.columnCount()-1,65);
+    ui->tableView->setColumnWidth(1,80);
+    ui->tableView->setColumnWidth(3,80);
+    ui->tableView->setColumnWidth(4,80);
+    ui->tableView->setColumnWidth(5,70);
+    ui->tableView->setColumnWidth(m.columnCount()-2,90);
+    ui->tableView->setColumnWidth(m.columnCount()-1,90);
     model->appendRow();
     connect(ui->plusButton,&QPushButton::clicked,model,&TModel::appendRow);
     connect(ui->plusButton,&QPushButton::clicked,ui->tableView,&QTableView::scrollToBottom);
@@ -924,7 +1060,7 @@ void MainWindow::initConnection(){
 //    // MinusButton connection
 //    connect(this,&MainWindow::click_minus,this,&MainWindow::_click_MinusButton);
 //    // DataButton connection
-    connect(ui->DataButton,SIGNAL(clicked()),this,SLOT(_click_DataButton()));
+    connect(ui->exportButton,SIGNAL(clicked()),this,SLOT(_click_ExportButton()));
     connect(ui->EndianButton,SIGNAL(clicked()),this,SLOT(_click_EndianButton()));
     connect(ui->logButton,&QPushButton::clicked,this,[&](){ui->textBrowser->clear();});
 }
@@ -1039,7 +1175,7 @@ bool MainWindow::constructFrame(int begin, int count){
 //        frame.append('\02');
 //        frame.append('\04');
 //    }
-    int funcCode = model->data(begin,2).toString().toInt();
+    int funcCode = model->data(begin,2).toString().toInt(nullptr,16);
     if(funcCode>0&&funcCode<5){
         frame.append(QByteArray::fromHex(QString("%1").arg(count,4,16,QLatin1Char('0')).toLatin1()));
         //str.append(QString("%1").arg(count,4,16,QLatin1Char('0')));
@@ -1054,18 +1190,18 @@ bool MainWindow::constructFrame(int begin, int count){
             if(val==1){frame.append('\xff');frame.append('\x00');}
             else if(val==0){frame.append('\x00');frame.append('\x00');}
             else{qDebug() << "Invalid coil value! please input '1' or '0'.";return false;}
-        }else{
+        }else{// funcCode = 6
             if(model->data(begin,5).toString()=="浮点型"){
                 float f_val = model->data(begin,9).toString().toFloat(&res);
                 if(!res){qDebug() << "Invalid value! please input a float value";return false;}
                 char * char_val = (char*) &f_val;
-                if(endianness==0){//little-endian
-                    for(int index = 0; index < 4; index++)
+                if(slave_endianness^master_endianness){
+                    for(int index = 3; index >= 0; index--)
                     {
                         frame.append(char_val[index]);
                     }
-                }else{// big-endian
-                    for(int index = 3; index >= 0; index--)
+                }else{
+                    for(int index = 0; index < 4; index++)
                     {
                         frame.append(char_val[index]);
                     }
@@ -1102,4 +1238,3 @@ bool MainWindow::constructFrame(int begin, int count){
         return false;
     }
 }
-
