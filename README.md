@@ -4,6 +4,18 @@ Modbus Client is a robust, cross-platform and elegant implementation for modbus 
 
 Given that there is currently no open-source & cross-platform Modbus client software with GUI available online (either not free or <.exe> type that can only be running on Windows), I implemented one with minimal dependencies (Qt library).
 
+## Table of Content
+
+- [Modbus Client](#modbus-client)
+  - [Table of Content](#table-of-content)
+  - [Developing Process](#developing-process)
+  - [Perequisites](#perequisites)
+  - [Usage](#usage)
+    - [Float32](#float32)
+  - [Demonstration](#demonstration)
+  - [Developing Environment](#developing-environment)
+  - [To contribute](#to-contribute)
+
 ## Developing Process
 
 1.FUNCTION
